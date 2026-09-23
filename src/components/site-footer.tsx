@@ -3,6 +3,7 @@ import type { ComponentType, SVGProps } from 'react';
 import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { cn } from '@/lib/utils';
+import { FooterBadgeList } from '@/components/footer-badge-list';
 import { LocaleSelector } from '@/components/locale-selector';
 
 export interface FooterColumn {
@@ -112,6 +113,8 @@ export function SiteFooter({
             className="border-neutral-700 text-neutral-200 hover:bg-white/5 hover:text-neutral-50"
           /> */}
         </div>
+
+        <FooterBadgeList className="mt-8" />
 
         {/* Bottom bar */}
         <div className="mt-6 flex flex-col gap-3 border-t border-neutral-800 pt-5 sm:flex-row sm:items-center sm:justify-between">
