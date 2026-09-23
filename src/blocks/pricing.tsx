@@ -343,9 +343,9 @@ export function Pricing({
             {title ?? m['landing.pricing.title']()}
           </Heading>
           {subtitle ? (
-            <p className="mt-4 text-2xl font-medium tracking-tight">
+            <h2 className="mt-4 text-2xl font-medium tracking-tight text-balance">
               {subtitle}
-            </p>
+            </h2>
           ) : null}
           <p className="text-muted-foreground mt-5 text-lg">
             {m['landing.pricing.description']()}

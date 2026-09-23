@@ -637,16 +637,15 @@ export type NewInviteCode = typeof inviteCode.$inferInsert;
 export type UserInvite = typeof userInvite.$inferSelect;
 export type NewUserInvite = typeof userInvite.$inferInsert;
 
-// One row per anonymous free generation — powers the daily 1-free-design cap.
+// One row per account — records that the sign-up gift design was used.
 export const freeDesignUsage = table(
   'free_design_usage',
   {
     id: text('id').primaryKey(),
-    ipHash: text('ip_hash').notNull(),
-    day: text('day').notNull(), // UTC YYYY-MM-DD
+    userId: text('user_id').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
-  (t) => [uniqueIndex('uq_free_design_usage_ip_day').on(t.ipHash, t.day)]
+  (t) => [uniqueIndex('uq_free_design_usage_user').on(t.userId)]
 );
 
 export type FreeDesignUsage = typeof freeDesignUsage.$inferSelect;

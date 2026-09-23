@@ -18,7 +18,7 @@ const STATIC_PAGES: { path: string; title: string; description: string }[] = [
   {
     path: '/ai-room-design-free',
     title: 'Free AI Room Design',
-    description: 'One free watermarked design per day, no sign-up',
+    description: 'First design free with a free account (watermarked)',
   },
   {
     path: '/ai-living-room-design',

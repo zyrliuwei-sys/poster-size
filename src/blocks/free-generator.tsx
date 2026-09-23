@@ -13,15 +13,28 @@ import {
 /** FAQ keys — also drives the FAQPage JSON-LD on the route. */
 export const FREE_FAQ_KEYS = ['q1', 'q2', 'q3'] as const;
 
-const FEATURES = [
+type Feature = {
+  icon: typeof CalendarCheck;
+  title: () => string;
+  desc: () => string;
+  /** Optional inline link rendered after the description (e.g. → /pricing). */
+  link?: { href: string; label: () => string };
+};
+
+const FEATURES: Feature[] = [
   { icon: CalendarCheck, title: m['free.f1.title'], desc: m['free.f1.desc'] },
   { icon: CreditCard, title: m['free.f2.title'], desc: m['free.f2.desc'] },
-  { icon: Unlock, title: m['free.f3.title'], desc: m['free.f3.desc'] },
-] as const;
+  {
+    icon: Unlock,
+    title: m['free.f3.title'],
+    desc: m['free.f3.desc'],
+    link: { href: '/pricing', label: m['free.f3.link'] },
+  },
+];
 
 /**
  * Landing page for the "ai room design free" intent — points at the studio
- * where the anonymous daily free design lives.
+ * where the account's free sign-up design lives.
  */
 export function FreeGenerator() {
   return (
@@ -62,7 +75,15 @@ export function FreeGenerator() {
                     {f.title()}
                   </h3>
                   <p className="text-muted-foreground mt-2 leading-relaxed">
-                    {f.desc()}
+                    {f.desc()}{' '}
+                    {f.link ? (
+                      <Link
+                        href={f.link.href}
+                        className="text-primary font-medium hover:underline"
+                      >
+                        {f.link.label()}
+                      </Link>
+                    ) : null}
                   </p>
                 </div>
               ))}

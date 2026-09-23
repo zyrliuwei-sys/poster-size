@@ -64,3 +64,6 @@ package-lock.json
 
 # Runtime image uploads (no-storage local fallback)
 /public/uploads/
+
+# throwaway Cloudflare API token handoff (shredded after upload)
+.cf-api-token

@@ -21,7 +21,7 @@ export function Floorplan() {
             {m['landing.floorplan.desc']()}
           </p>
           <Link
-            href="/sign-up"
+            href="/room-design"
             className="mt-8 inline-flex items-center gap-1 text-lg text-[#2997ff] transition-colors hover:underline"
           >
             {m['landing.floorplan.cta']()}

@@ -7,10 +7,9 @@ import {
 } from '@/config/design-pricing';
 import { consume, grant, revoke } from '@/modules/credits/service';
 import {
-  clientDayKey,
-  FREE_DAILY_LIMIT,
-  freeDesignsUsedToday,
-  recordFreeDesign,
+  claimFreeDesign,
+  hasFreeDesign,
+  releaseFreeDesign,
 } from '@/modules/design/free-tier';
 import {
   generateDesign,
@@ -23,9 +22,6 @@ import {
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
 
-/** Marker the studio matches to switch to its sign-up prompt. */
-const FREE_LIMIT_ERROR = 'Daily free design limit reached';
-
 // Client downscales to ≤1536px JPEG (~under 2MB base64); cap generously at 12MB.
 const MAX_IMAGE_CHARS = 12_000_000;
 
@@ -34,11 +30,19 @@ async function GET({ request }: { request: Request }) {
   try {
     const aiConfigured = await isAIConfigured();
     const requiresAuth = await isEvoLinkConfigured();
-    return respData({
-      aiConfigured,
-      requiresAuth,
-      freeDailyLimit: FREE_DAILY_LIMIT,
-    });
+
+    // Signed-in visitors also learn whether their sign-up gift design is
+    // still unused, so the studio can show the right hint under the button.
+    let freeDesignAvailable = false;
+    if (aiConfigured && requiresAuth) {
+      const auth = getAuth();
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (session?.user) {
+        freeDesignAvailable = await hasFreeDesign(session.user.id);
+      }
+    }
+
+    return respData({ aiConfigured, requiresAuth, freeDesignAvailable });
   } catch (e: any) {
     console.error('get design status failed:', e);
     return respErr(e?.message || 'get design status failed');
@@ -93,6 +97,7 @@ async function POST({ request }: { request: Request }) {
   if (limited) return limited;
 
   let reservationId: string | undefined;
+  let freeClaimed = false;
   let user: { id: string; email: string } | undefined;
 
   try {
@@ -115,50 +120,31 @@ async function POST({ request }: { request: Request }) {
     if (await isEvoLinkConfigured()) {
       const auth = getAuth();
       const session = await auth.api.getSession({ headers: request.headers });
-
-      // Anonymous free tier: one watermarked design per visitor per day.
-      // The quota row is recorded after a successful generation, so a failed
-      // run never burns the free attempt; the unique (ip_hash, day) index
-      // still hard-caps repeat visitors.
       if (!session?.user) {
-        const dayKey = clientDayKey(request);
-        const used = await freeDesignsUsedToday(dayKey);
-        if (used >= FREE_DAILY_LIMIT) {
-          return respErr(
-            `${FREE_LIMIT_ERROR}. Sign up to keep designing — credits start at $5.`
-          );
-        }
-        const freeResult = await generateDesign({
-          image,
-          roomType,
-          style,
-          instructions,
-        });
-        try {
-          await recordFreeDesign(dayKey);
-        } catch (recordError) {
-          console.warn('record free design usage failed:', recordError);
-        }
-        const { upstreamCredits: _freeUpstream, ...freePublic } = freeResult;
-        return respData({ ...freePublic, free: true });
+        return respErr('Sign in to generate a room design');
       }
-
       user = { id: session.user.id, email: session.user.email };
 
-      const reservation = await consume({
-        userId: user.id,
-        userEmail: user.email,
-        credits: DESIGN_CREDIT_RESERVE,
-        scene: 'ai_task',
-        description: 'Room design generation reservation',
-        metadata: JSON.stringify({ provider: 'evolink', multiplier: 7 }),
-      });
-      if (!reservation.success || !reservation.consumedCredit?.id) {
-        return respErr(
-          `Insufficient credits. At least ${DESIGN_CREDIT_RESERVE} credits are required.`
-        );
+      // Every account gets exactly one free design — the sign-up gift. The
+      // claim is atomic; if the generation then fails, the catch block
+      // releases it so an outage never burns the gift.
+      freeClaimed = await claimFreeDesign(user.id);
+      if (!freeClaimed) {
+        const reservation = await consume({
+          userId: user.id,
+          userEmail: user.email,
+          credits: DESIGN_CREDIT_RESERVE,
+          scene: 'ai_task',
+          description: 'Room design generation reservation',
+          metadata: JSON.stringify({ provider: 'evolink', multiplier: 7 }),
+        });
+        if (!reservation.success || !reservation.consumedCredit?.id) {
+          return respErr(
+            `Insufficient credits. At least ${DESIGN_CREDIT_RESERVE} credits are required.`
+          );
+        }
+        reservationId = reservation.consumedCredit.id;
       }
-      reservationId = reservation.consumedCredit.id;
     }
 
     const result = await generateDesign({
@@ -212,10 +198,19 @@ async function POST({ request }: { request: Request }) {
 
     return respData({
       ...publicResult,
+      ...(freeClaimed ? { free: true } : {}),
       chargedCredits,
       ...(historyId ? { id: historyId } : {}),
     });
   } catch (e: any) {
+    if (freeClaimed && user) {
+      // The generation failed — give the sign-up gift back.
+      try {
+        await releaseFreeDesign(user.id);
+      } catch (releaseError) {
+        console.error('failed to release free design claim', releaseError);
+      }
+    }
     if (reservationId) {
       try {
         await revoke(reservationId);

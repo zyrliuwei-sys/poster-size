@@ -155,7 +155,6 @@ export function DesignStudio({ initialRoom }: { initialRoom?: string }) {
   const [history, setHistory] = useState<DesignResult[]>([]);
   const [active, setActive] = useState<DesignResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [freeLimitHit, setFreeLimitHit] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Deep link (?room=bathroom) or a showcase tap — land on the studio preloaded.
@@ -185,12 +184,17 @@ export function DesignStudio({ initialRoom }: { initialRoom?: string }) {
   }, []);
 
   const statusQuery = useQuery({
-    queryKey: ['design-status'],
+    queryKey: ['design-status', session?.user?.id],
     queryFn: () =>
-      apiGet<{ aiConfigured: boolean; requiresAuth?: boolean }>('/api/design'),
+      apiGet<{
+        aiConfigured: boolean;
+        requiresAuth?: boolean;
+        freeDesignAvailable?: boolean;
+      }>('/api/design'),
   });
   const aiConfigured = statusQuery.data?.aiConfigured ?? true;
   const requiresAuth = statusQuery.data?.requiresAuth ?? false;
+  const freeDesignAvailable = statusQuery.data?.freeDesignAvailable ?? false;
 
   const historyQuery = useQuery({
     queryKey: ['design-history', session?.user?.id],
@@ -251,21 +255,11 @@ export function DesignStudio({ initialRoom }: { initialRoom?: string }) {
         ...result,
         imageUrl: normalizeImageUrl(result.imageUrl),
       };
-      // Free-tier results are one-off previews — keep them out of history.
-      if (!normalizedResult.free) {
-        setHistory((prev) => [normalizedResult, ...prev].slice(0, 30));
-      }
+      setHistory((prev) => [normalizedResult, ...prev].slice(0, 30));
       setActive(normalizedResult);
       setView('result');
     },
-    onError: (e: Error) => {
-      if (e.message.includes('Daily free design limit reached')) {
-        setFreeLimitHit(true);
-        toast.error(m['create.studio.free_limit']());
-        return;
-      }
-      toast.error(e.message);
-    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const generating = mutation.isPending;
@@ -401,7 +395,7 @@ export function DesignStudio({ initialRoom }: { initialRoom?: string }) {
                   <>
                     {active.free ? (
                       <Link
-                        href="/sign-up"
+                        href="/pricing"
                         className="inline-flex items-center gap-1.5 rounded-full bg-[#0071e3] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0077ed]"
                       >
                         <Download className="size-4" />
@@ -604,18 +598,16 @@ export function DesignStudio({ initialRoom }: { initialRoom?: string }) {
                   {m['create.studio.demo_note']()}
                 </p>
               ) : requiresAuth && !session?.user ? (
-                freeLimitHit ? (
-                  <Link
-                    href="/sign-up"
-                    className="text-center text-xs font-medium text-[#0071e3] underline underline-offset-2"
-                  >
-                    {m['create.studio.free_limit_hint']()}
-                  </Link>
-                ) : (
-                  <p className="text-muted-foreground text-center text-xs">
-                    {m['create.studio.free_anonymous_hint']()}
-                  </p>
-                )
+                <Link
+                  href="/sign-up"
+                  className="text-center text-xs font-medium text-[#0071e3] underline underline-offset-2"
+                >
+                  {m['create.studio.sign_up_hint']()}
+                </Link>
+              ) : freeDesignAvailable ? (
+                <p className="text-muted-foreground text-center text-xs">
+                  {m['create.studio.first_free_hint']()}
+                </p>
               ) : (
                 <p className="text-muted-foreground text-center text-xs">
                   {m['create.studio.free_hint']()}

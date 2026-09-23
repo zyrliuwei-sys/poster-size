@@ -1,50 +1,41 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import { freeDesignUsage } from '@/config/db/schema';
-import { getUuid, md5 } from '@/lib/hash';
+import { getUuid } from '@/lib/hash';
 
-/** Free anonymous generations per visitor per UTC day. Results are watermarked. */
-export const FREE_DAILY_LIMIT = 1;
+/**
+ * Sign-up gift: every account gets exactly one free design, ever. The result
+ * is watermarked; further generations are charged in credits.
+ */
 
-function utcDay(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-/** Stable per-day key so the raw IP address never reaches the database. */
-export function clientDayKey(request: Request): string {
-  // Platform-set headers win. XFF is append-only through proxies, so its LAST
-  // entry is the edge-observed client IP — the first entry is client-supplied
-  // and spoofable (rotating it would bypass the daily quota).
-  const xff = request.headers.get('x-forwarded-for');
-  const lastXff = xff ? xff.split(',').pop()?.trim() : '';
-  const ip =
-    request.headers.get('cf-connecting-ip')?.trim() ||
-    lastXff ||
-    request.headers.get('x-real-ip')?.trim() ||
-    'unknown';
-  return md5(`${utcDay()}:${ip}`);
-}
-
-export async function freeDesignsUsedToday(dayKey: string): Promise<number> {
+/** Has the account's free design been used? */
+export async function hasFreeDesign(userId: string): Promise<boolean> {
   const rows = await db()
-    .select({ count: sql<number>`count(*)` })
+    .select({ id: freeDesignUsage.id })
     .from(freeDesignUsage)
-    .where(
-      and(eq(freeDesignUsage.ipHash, dayKey), eq(freeDesignUsage.day, utcDay()))
-    );
-  return Number(rows[0]?.count ?? 0);
+    .where(eq(freeDesignUsage.userId, userId))
+    .limit(1);
+  return rows.length === 0;
 }
 
 /**
- * Record one free generation. The unique (ip_hash, day) index makes this the
- * quota gate itself: a second insert on the same day throws, so concurrent
- * requests cannot both pass the limit.
+ * Atomically claim the account's free design. Returns false when the gift
+ * was already used — the unique index on user_id makes this race-free, so
+ * concurrent requests cannot both claim it. Any insert failure also returns
+ * false (falling through to the paid path) rather than granting a second
+ * free design.
  */
-export async function recordFreeDesign(dayKey: string): Promise<void> {
-  await db().insert(freeDesignUsage).values({
-    id: getUuid(),
-    ipHash: dayKey,
-    day: utcDay(),
-  });
+export async function claimFreeDesign(userId: string): Promise<boolean> {
+  try {
+    await db().insert(freeDesignUsage).values({ id: getUuid(), userId });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Give the claim back when the generation itself failed. */
+export async function releaseFreeDesign(userId: string): Promise<void> {
+  await db().delete(freeDesignUsage).where(eq(freeDesignUsage.userId, userId));
 }

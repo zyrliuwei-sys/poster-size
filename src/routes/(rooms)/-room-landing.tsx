@@ -141,14 +141,16 @@ function roomLabel(key: RoomLandingKey): string {
 }
 
 /**
- * Spoke "kind" — rooms share the design wording, while organizer/planner get
- * their own verbs so a page about tidying doesn't claim to be about design.
+ * Spoke "kind" — rooms share the design wording, while organizer/planner/
+ * makeover get their own verbs so a page about tidying doesn't claim to be
+ * about design, and the makeover page reads like a makeover page.
  */
-type SpokeKind = 'rooms' | 'organizer' | 'planner';
+type SpokeKind = 'rooms' | 'organizer' | 'planner' | 'makeover';
 
 function spokeKind(key: RoomLandingKey): SpokeKind {
   if (key === 'organizer') return 'organizer';
   if (key === 'planner') return 'planner';
+  if (key === 'makeover') return 'makeover';
   return 'rooms';
 }
 
@@ -167,12 +169,23 @@ function spokeParams(key: RoomLandingKey, room: string) {
   ]({ article, room });
   const changeVerb =
     m[`roompage.changes.verb.${kind}` as 'roompage.changes.verb.rooms']();
+  // "in your bathroom" for rooms, "in a makeover" for the makeover spoke.
+  const changeWhere =
+    kind === 'rooms'
+      ? m['roompage.changes.where.rooms']({ room })
+      : m[
+          `roompage.changes.where.${kind}` as 'roompage.changes.where.makeover'
+        ]();
+  const styleSubject =
+    kind === 'rooms'
+      ? m['roompage.styles.subject.rooms']({ article, room })
+      : m[
+          `roompage.styles.subject.${kind}` as 'roompage.styles.subject.makeover'
+        ]();
   const tipsFor =
     kind === 'rooms'
       ? m['roompage.tips.for.rooms']({ room })
-      : kind === 'organizer'
-        ? m['roompage.tips.for.organizer']()
-        : m['roompage.tips.for.planner']();
+      : m[`roompage.tips.for.${kind}` as 'roompage.tips.for.organizer']();
   const ctaVerb = m[`roompage.cta.verb.${kind}` as 'roompage.cta.verb.rooms']();
   const buttonVerb =
     m[`roompage.button.verb.${kind}` as 'roompage.button.verb.rooms']();
@@ -181,6 +194,8 @@ function spokeParams(key: RoomLandingKey, room: string) {
     room,
     verbPhrase,
     changeVerb,
+    changeWhere,
+    styleSubject,
     tipsFor,
     ctaVerb,
     buttonVerb,
@@ -207,10 +222,45 @@ const STEPS = [
 
 const TIPS = [1, 2, 3] as const;
 
+/** Room spokes in a fixed order — drives the related-links rotation. */
+const ROOM_SPOKES: RoomLandingKey[] = [
+  'living',
+  'bedroom',
+  'kitchen',
+  'bathroom',
+  'dining',
+  'office',
+  'basement',
+  'attic',
+  'study',
+  'kids',
+];
+
+/** Rotating phrasings of the "what changes" paragraph (anti-duplicate copy). */
+const CHANGE_DESCS = [
+  m['roompage.changes.desc.a'],
+  m['roompage.changes.desc.b'],
+  m['roompage.changes.desc.c'],
+] as const;
+
+/** Sibling spokes to link at the bottom — 4 rooms, never the page itself. */
+function relatedRoomsFor(key: RoomLandingKey): RoomLandingKey[] {
+  const idx = ROOM_SPOKES.indexOf(key);
+  const start = idx >= 0 ? idx + 1 : 0;
+  return Array.from(
+    { length: 4 },
+    (_, i) => ROOM_SPOKES[(start + i) % ROOM_SPOKES.length]
+  ).filter((k) => k !== key);
+}
+
 function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
   const config = ROOM_LANDINGS[roomKey];
   const room = roomLabel(roomKey);
   const p = spokeParams(roomKey, room);
+  const relatedRooms = relatedRoomsFor(roomKey);
+  const changeDesc = CHANGE_DESCS[
+    Object.keys(ROOM_LANDINGS).indexOf(roomKey) % CHANGE_DESCS.length
+  ]({ room });
   const studioHref = config.studioRoom
     ? `/room-design?room=${config.studioRoom}`
     : '/room-design';
@@ -284,7 +334,7 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
         <section className="bg-background px-4 py-20 sm:py-24">
           <div className="mx-auto max-w-6xl">
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              {m['roompage.styles.title']({ article: p.article, room })}
+              {m['roompage.styles.title']({ style_subject: p.styleSubject })}
             </h2>
             <div className="mt-10 grid gap-6 sm:grid-cols-3">
               {config.featuredStyles.map((s) => (
@@ -319,10 +369,13 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
         <section className="bg-[#f5f5f7] px-4 py-20 sm:py-24">
           <div className="mx-auto max-w-3xl">
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              {m['roompage.changes.title']({ change_verb: p.changeVerb, room })}
+              {m['roompage.changes.title']({
+                change_verb: p.changeVerb,
+                change_where: p.changeWhere,
+              })}
             </h2>
             <p className="text-muted-foreground mt-5 text-lg leading-relaxed">
-              {m['roompage.changes.desc']({ room })}
+              {changeDesc}
             </p>
           </div>
         </section>
@@ -373,6 +426,41 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
                   {paragraph}
                 </p>
               ))}
+          </div>
+        </section>
+
+        {/* Related rooms — sibling links so authority flows between spokes */}
+        <section className="bg-background px-4 py-20 sm:py-24">
+          <div className="mx-auto max-w-6xl">
+            <h2 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+              {m['roompage.related.title']()}
+            </h2>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {relatedRooms.map((key) => (
+                <Link
+                  key={key}
+                  href={ROOM_PATHS[key]}
+                  className="group rounded-2xl border border-neutral-200 bg-[#f5f5f7] p-5 transition-colors hover:border-[#0071e3]"
+                >
+                  <span className="block text-base font-semibold tracking-tight group-hover:text-[#0071e3]">
+                    {m[`roompage.${key}.title` as 'roompage.bathroom.title']()}
+                  </span>
+                  <span className="text-muted-foreground mt-1.5 line-clamp-2 block text-sm leading-relaxed">
+                    {m[`roompage.${key}.intro` as 'roompage.bathroom.intro']()}
+                  </span>
+                </Link>
+              ))}
+            </div>
+            <p className="text-muted-foreground mt-8 text-sm">
+              {m['roompage.related.home_before']()}{' '}
+              <Link
+                href="/"
+                className="text-primary font-medium hover:underline"
+              >
+                {m['roompage.related.home_anchor']()}
+              </Link>
+              {m['roompage.related.home_after']()}
+            </p>
           </div>
         </section>
 

@@ -60,9 +60,10 @@ function seoSchema(locale: string, homeUrl: string) {
         operatingSystem: 'Web browser',
         offers: {
           '@type': 'Offer',
-          price: '5',
+          price: '0',
           priceCurrency: 'USD',
-          description: 'Paid room-design credits start at $5; sign-in required',
+          description:
+            'First design free with a free account (one per account, watermarked, personal use); paid credits from $5',
         },
       },
       {
