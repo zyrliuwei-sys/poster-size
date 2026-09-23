@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { getAuth } from '@/core/auth';
+import { notifyIndexNow } from '@/modules/indexnow/service';
 import * as postsService from '@/modules/posts/service';
 import { hasPermission } from '@/modules/rbac/service';
 import { respData, respErr, respOk, respPage } from '@/lib/resp';
@@ -12,6 +13,20 @@ async function checkAdmin(request: Request) {
   const isAdmin = await hasPermission(session.user.id, 'admin.*');
   if (!isAdmin) throw new Error('Forbidden');
   return session;
+}
+
+function postUrls(request: Request, slug: string) {
+  const origin = new URL(request.url).origin;
+  const encodedSlug = encodeURIComponent(slug);
+  return [
+    new URL(`/blog/${encodedSlug}`, origin).href,
+    new URL(`/zh/blog/${encodedSlug}`, origin).href,
+    new URL('/sitemap.xml', origin).href,
+  ];
+}
+
+function shouldNotifyPost(status: string | undefined) {
+  return status !== 'draft' && status !== 'pending';
 }
 
 async function GET({ request }: { request: Request }) {
@@ -72,6 +87,9 @@ async function POST({ request }: { request: Request }) {
       authorName,
       status,
     });
+    if (shouldNotifyPost(result.status)) {
+      await notifyIndexNow(request.url, postUrls(request, result.slug));
+    }
     return respData(result);
   } catch (error: any) {
     return respErr(error.message || 'Internal error');
@@ -103,6 +121,9 @@ async function PUT({ request }: { request: Request }) {
       authorName,
       status,
     });
+    if (result?.slug && shouldNotifyPost(result.status)) {
+      await notifyIndexNow(request.url, postUrls(request, result.slug));
+    }
     return respData(result);
   } catch (error: any) {
     return respErr(error.message || 'Internal error');
@@ -115,7 +136,11 @@ async function DELETE({ request }: { request: Request }) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return respErr('ID is required');
+    const existing = await postsService.getById(id);
     await postsService.remove(id);
+    if (existing?.slug && shouldNotifyPost(existing.status)) {
+      await notifyIndexNow(request.url, postUrls(request, existing.slug));
+    }
     return respOk();
   } catch (error: any) {
     return respErr(error.message || 'Internal error');
