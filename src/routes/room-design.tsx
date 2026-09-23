@@ -7,6 +7,7 @@ import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 import { CreateHero, DesignStudio, DesignTips } from '@/blocks/design-studio';
 import { Footer } from '@/blocks/footer';
 import { Header } from '@/blocks/header';
+import { RoomDesignLinks } from '@/blocks/room-design-links';
 import { Showcase } from '@/blocks/showcase';
 import { SupportWidget } from '@/blocks/support-widget';
 
@@ -20,6 +21,7 @@ function RoomDesignPage() {
         <DesignStudio initialRoom={room} />
         <Showcase />
         <DesignTips />
+        <RoomDesignLinks />
       </main>
       <Footer />
       <SupportWidget />

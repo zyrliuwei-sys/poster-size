@@ -258,9 +258,12 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
   const room = roomLabel(roomKey);
   const p = spokeParams(roomKey, room);
   const relatedRooms = relatedRoomsFor(roomKey);
-  const changeDesc = CHANGE_DESCS[
-    Object.keys(ROOM_LANDINGS).indexOf(roomKey) % CHANGE_DESCS.length
-  ]({ room });
+  const changeDesc =
+    roomKey === 'organizer'
+      ? m['roompage.changes.desc.organizer']()
+      : CHANGE_DESCS[
+          Object.keys(ROOM_LANDINGS).indexOf(roomKey) % CHANGE_DESCS.length
+        ]({ room });
   const studioHref = config.studioRoom
     ? `/room-design?room=${config.studioRoom}`
     : '/room-design';
@@ -437,18 +440,20 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
             </h2>
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {relatedRooms.map((key) => (
-                <Link
+                <article
                   key={key}
-                  href={ROOM_PATHS[key]}
-                  className="group rounded-2xl border border-neutral-200 bg-[#f5f5f7] p-5 transition-colors hover:border-[#0071e3]"
+                  className="rounded-2xl border border-neutral-200 bg-[#f5f5f7] p-5 transition-colors hover:border-[#0071e3]"
                 >
-                  <span className="block text-base font-semibold tracking-tight group-hover:text-[#0071e3]">
+                  <Link
+                    href={ROOM_PATHS[key]}
+                    className="group block text-base font-semibold tracking-tight hover:text-[#0071e3]"
+                  >
                     {m[`roompage.${key}.title` as 'roompage.bathroom.title']()}
-                  </span>
+                  </Link>
                   <span className="text-muted-foreground mt-1.5 line-clamp-2 block text-sm leading-relaxed">
                     {m[`roompage.${key}.intro` as 'roompage.bathroom.intro']()}
                   </span>
-                </Link>
+                </article>
               ))}
             </div>
             <p className="text-muted-foreground mt-8 text-sm">

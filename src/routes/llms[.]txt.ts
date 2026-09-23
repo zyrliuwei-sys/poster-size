@@ -73,7 +73,7 @@ const STATIC_PAGES: { path: string; title: string; description: string }[] = [
   {
     path: '/ai-room-planner',
     title: 'AI Room Planner',
-    description: 'Plan furniture layouts from a photo or floor plan',
+    description: 'Plan furniture layouts from one photo',
   },
   {
     path: '/ai-room-makeover',

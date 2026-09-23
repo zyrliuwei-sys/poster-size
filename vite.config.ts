@@ -84,6 +84,16 @@ export default defineConfig({
             ['zh', '/api/:path(.*)?'],
           ],
         },
+        // Keep the bathroom spoke on an explicit localized route. This is
+        // intentionally ahead of the catch-all so it cannot fall back to the
+        // English URL during SSR.
+        {
+          pattern: '/ai-bathroom-design',
+          localized: [
+            ['zh', '/zh/ai-bathroom-design'],
+            ['en', '/ai-bathroom-design'],
+          ],
+        },
         // Bare locale homes match without a trailing-slash redirect.
         {
           pattern: '/',

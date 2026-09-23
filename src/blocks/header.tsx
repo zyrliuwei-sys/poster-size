@@ -23,7 +23,6 @@ export function Header() {
     { href: '/room-design', label: m['landing.nav.create']() },
     { href: '/#how', label: m['landing.nav.how']() },
     { href: '/#gallery', label: m['landing.nav.gallery']() },
-    { href: '/#floorplan', label: m['landing.nav.floorplan']() },
     { href: '/pricing', label: m['landing.nav.pricing']() },
     { href: '/#faq', label: m['landing.nav.faq']() },
   ];

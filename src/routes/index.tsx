@@ -10,7 +10,6 @@ import { Compare } from '@/blocks/compare';
 import { CTA } from '@/blocks/cta';
 import { FAQ, FAQ_KEYS } from '@/blocks/faq';
 import { Features } from '@/blocks/features';
-import { Floorplan } from '@/blocks/floorplan';
 import { Footer } from '@/blocks/footer';
 import { FreeTier } from '@/blocks/free-tier';
 import { Gallery } from '@/blocks/gallery';
@@ -32,7 +31,6 @@ function HomePage() {
         <ChangesKeeps />
         <Gallery />
         <StyleGuide />
-        <Floorplan />
         <FreeTier />
         <Compare />
         <Rooms />
