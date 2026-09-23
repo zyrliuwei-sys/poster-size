@@ -40,10 +40,10 @@ export function Rooms() {
 
         <ul className="flex flex-wrap justify-center gap-3">
           {ROOMS.map(({ key, href, hasDesc }) => (
-            <li key={key}>
+            <li key={key} className="flex">
               <Link
                 href={href}
-                className="rounded-full bg-[#f5f5f7] px-5 py-2.5 text-base font-medium transition-colors hover:bg-neutral-200"
+                className="inline-flex items-center rounded-full bg-[#f5f5f7] px-5 py-2.5 text-base leading-normal font-medium transition-colors hover:bg-neutral-200"
               >
                 {m[`landing.rooms.${key}` as 'landing.rooms.bedroom']()}
                 {hasDesc && (
