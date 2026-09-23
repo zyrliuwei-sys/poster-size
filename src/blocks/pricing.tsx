@@ -5,7 +5,6 @@ import { useMutation } from '@tanstack/react-query';
 import {
   Check,
   Folder,
-  Folders,
   Headphones,
   Mail,
   Puzzle,
@@ -16,7 +15,7 @@ import {
 import { toast } from 'sonner';
 
 import { useSession } from '@/core/auth/client';
-import { useRouter } from '@/core/i18n/navigation';
+import { Link, useRouter } from '@/core/i18n/navigation';
 import { creditsForPriceInCents } from '@/config/design-pricing';
 import { apiPost } from '@/lib/api-client';
 import { currentPathWithQuery } from '@/lib/redirect';
@@ -40,7 +39,17 @@ const ALL_PROVIDERS: PaymentProvider[] = [
   'wechat',
 ];
 
-export function Pricing({ title }: { title?: string } = {}) {
+export function Pricing({
+  title,
+  subtitle,
+  heading = 'h2',
+}: {
+  title?: string;
+  /** Secondary line under the heading (e.g. the old H2 copy on /pricing). */
+  subtitle?: string;
+  /** Heading level — /pricing passes h1 (it is the page's only H1). */
+  heading?: 'h1' | 'h2';
+} = {}) {
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -79,7 +88,6 @@ export function Pricing({ title }: { title?: string } = {}) {
     { icon: Mail, label: m['landing.pricing.feature_email_support']() },
   ];
   const designerFeatures = (priceInCents: number) => [
-    { icon: Folders, label: m['landing.pricing.feature_unlimited_projects']() },
     creditsFeature(priceInCents),
     designsFeature(priceInCents),
     { icon: Zap, label: m['landing.pricing.feature_priority_support']() },
@@ -322,6 +330,8 @@ export function Pricing({ title }: { title?: string } = {}) {
     startCheckout(pendingPlan, provider);
   }
 
+  const Heading = heading;
+
   return (
     <section
       id="pricing"
@@ -329,13 +339,61 @@ export function Pricing({ title }: { title?: string } = {}) {
     >
       <div className="mx-auto max-w-5xl">
         <div className="mb-20 text-center">
-          <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+          <Heading className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
             {title ?? m['landing.pricing.title']()}
-          </h2>
+          </Heading>
+          {subtitle ? (
+            <p className="mt-4 text-2xl font-medium tracking-tight">
+              {subtitle}
+            </p>
+          ) : null}
           <p className="text-muted-foreground mt-5 text-lg">
             {m['landing.pricing.description']()}
           </p>
         </div>
+
+        {/* Free entry tier — the promise every landing page makes ("one free
+            design a day") has to be findable here, above the paid plans. */}
+        <div className="mb-16 rounded-3xl border border-neutral-200 bg-[#f5f5f7] p-8 sm:p-10">
+          <div className="flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-xl font-semibold tracking-tight">
+                {m['landing.pricing.free.name']()}
+              </h3>
+              <p className="mt-2 text-4xl font-semibold tracking-tight">
+                $0
+                <span className="text-muted-foreground ml-2 text-base font-normal">
+                  {m['landing.pricing.free.tagline']()}
+                </span>
+              </p>
+            </div>
+            <Link
+              href="/room-design"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#0071e3] px-7 py-3 text-base font-medium text-white shadow-lg transition-all hover:bg-[#0077ed]"
+            >
+              {m['landing.pricing.free.cta']()}
+            </Link>
+          </div>
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                'landing.pricing.free.b1',
+                'landing.pricing.free.b2',
+                'landing.pricing.free.b3',
+                'landing.pricing.free.b4',
+              ] as const
+            ).map((key) => (
+              <li key={key} className="flex items-start gap-3">
+                <Check className="text-primary mt-1 size-5 shrink-0" />
+                <span className="leading-relaxed">{m[key]()}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-muted-foreground mt-8 text-sm leading-relaxed">
+            {m['landing.pricing.free.note']()}
+          </p>
+        </div>
+
         <PricingTable groups={groups} onCheckout={handleCheckout} />
       </div>
 

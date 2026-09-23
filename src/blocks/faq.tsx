@@ -43,7 +43,12 @@ export function FAQ() {
                   `landing.faq.${key}.question` as 'landing.faq.free.question'
                 ]()}
               </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground pb-6 text-base leading-relaxed">
+              {/* keepMounted: the answer must exist in the served HTML so it
+                  matches the FAQPage JSON-LD (crawlers don't click). */}
+              <AccordionContent
+                keepMounted
+                className="text-muted-foreground pb-6 text-base leading-relaxed"
+              >
                 {m[`landing.faq.${key}.answer` as 'landing.faq.free.answer']()}
               </AccordionContent>
             </AccordionItem>

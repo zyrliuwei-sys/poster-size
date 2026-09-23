@@ -20,6 +20,7 @@ export type RoomLandingKey =
   | 'basement'
   | 'attic'
   | 'study'
+  | 'kids'
   | 'planner'
   | 'makeover'
   | 'organizer';
@@ -104,6 +105,13 @@ export const ROOM_LANDINGS: Record<RoomLandingKey, RoomLanding> = {
     imageStyle: 'midcentury',
     featuredStyles: ['midcentury', 'japandi', 'minimalist'],
   },
+  kids: {
+    studioRoom: 'kids',
+    image: '/imgs/generated/style-bohemian.png',
+    ...STYLE_PNG,
+    imageStyle: 'bohemian',
+    featuredStyles: ['scandinavian', 'bohemian', 'modern'],
+  },
   planner: {
     image: '/imgs/demo/livingRoom-minimalist.avif',
     ...AVIF,
@@ -132,6 +140,53 @@ function roomLabel(key: RoomLandingKey): string {
   return m[`create.room.${key}` as 'create.room.living']().toLowerCase();
 }
 
+/**
+ * Spoke "kind" — rooms share the design wording, while organizer/planner get
+ * their own verbs so a page about tidying doesn't claim to be about design.
+ */
+type SpokeKind = 'rooms' | 'organizer' | 'planner';
+
+function spokeKind(key: RoomLandingKey): SpokeKind {
+  if (key === 'organizer') return 'organizer';
+  if (key === 'planner') return 'planner';
+  return 'rooms';
+}
+
+/**
+ * The shared heading templates take verb phrases as params, and the values
+ * themselves come from message keys — so "How to organize a room with AI"
+ * localizes correctly instead of hardcoding English into the factory.
+ */
+function spokeParams(key: RoomLandingKey, room: string) {
+  const kind = spokeKind(key);
+  // English articles: "an attic", never "a attic". The zh templates don't
+  // reference {article}, so the value there is simply unused.
+  const article = /^[aeiou]/i.test(room) ? 'an' : 'a';
+  const verbPhrase = m[
+    `roompage.steps.verb.${kind}` as 'roompage.steps.verb.rooms'
+  ]({ article, room });
+  const changeVerb =
+    m[`roompage.changes.verb.${kind}` as 'roompage.changes.verb.rooms']();
+  const tipsFor =
+    kind === 'rooms'
+      ? m['roompage.tips.for.rooms']({ room })
+      : kind === 'organizer'
+        ? m['roompage.tips.for.organizer']()
+        : m['roompage.tips.for.planner']();
+  const ctaVerb = m[`roompage.cta.verb.${kind}` as 'roompage.cta.verb.rooms']();
+  const buttonVerb =
+    m[`roompage.button.verb.${kind}` as 'roompage.button.verb.rooms']();
+  return {
+    article,
+    room,
+    verbPhrase,
+    changeVerb,
+    tipsFor,
+    ctaVerb,
+    buttonVerb,
+  };
+}
+
 const STEPS = [
   {
     icon: Camera,
@@ -155,6 +210,7 @@ const TIPS = [1, 2, 3] as const;
 function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
   const config = ROOM_LANDINGS[roomKey];
   const room = roomLabel(roomKey);
+  const p = spokeParams(roomKey, room);
   const studioHref = config.studioRoom
     ? `/room-design?room=${config.studioRoom}`
     : '/room-design';
@@ -177,7 +233,7 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
                 href={studioHref}
                 className="bg-primary mt-8 inline-flex items-center gap-2 rounded-full px-7 py-3 text-base font-medium text-white shadow-lg transition-all hover:bg-[#0077ed]"
               >
-                {m['roompage.cta.button']({ room })}
+                {m['roompage.cta.button']({ button_verb: p.buttonVerb, room })}
                 <ArrowRight className="size-4" />
               </Link>
             </div>
@@ -204,7 +260,7 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
         <section className="bg-[#f5f5f7] px-4 py-20 sm:py-24">
           <div className="mx-auto max-w-6xl">
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              {m['roompage.steps.title']({ room })}
+              {m['roompage.steps.title']({ verb_phrase: p.verbPhrase })}
             </h2>
             <div className="mt-10 grid gap-10 md:grid-cols-3">
               {STEPS.map((step) => (
@@ -228,7 +284,7 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
         <section className="bg-background px-4 py-20 sm:py-24">
           <div className="mx-auto max-w-6xl">
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              {m['roompage.styles.title']({ room })}
+              {m['roompage.styles.title']({ article: p.article, room })}
             </h2>
             <div className="mt-10 grid gap-6 sm:grid-cols-3">
               {config.featuredStyles.map((s) => (
@@ -263,7 +319,7 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
         <section className="bg-[#f5f5f7] px-4 py-20 sm:py-24">
           <div className="mx-auto max-w-3xl">
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              {m['roompage.changes.title']({ room })}
+              {m['roompage.changes.title']({ change_verb: p.changeVerb, room })}
             </h2>
             <p className="text-muted-foreground mt-5 text-lg leading-relaxed">
               {m['roompage.changes.desc']({ room })}
@@ -275,7 +331,7 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
         <section className="bg-background px-4 py-20 sm:py-24">
           <div className="mx-auto max-w-6xl">
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              {m['roompage.tips.title']({ room })}
+              {m['roompage.tips.title']({ tips_for: p.tipsFor })}
             </h2>
             <ul className="mt-8 grid gap-6 md:grid-cols-3">
               {TIPS.map((n) => (
@@ -297,11 +353,34 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
           </div>
         </section>
 
+        {/* In-depth guide — unique per room; the anti-thin-content section */}
+        <section className="bg-[#f5f5f7] px-4 py-20 sm:py-24">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+              {m[
+                `roompage.${roomKey}.guide.title` as 'roompage.living.guide.title'
+              ]()}
+            </h2>
+            {m[
+              `roompage.${roomKey}.guide.body` as 'roompage.living.guide.body'
+            ]()
+              .split('\n\n')
+              .map((paragraph, i) => (
+                <p
+                  key={i}
+                  className="text-muted-foreground mt-5 text-lg leading-relaxed"
+                >
+                  {paragraph}
+                </p>
+              ))}
+          </div>
+        </section>
+
         {/* CTA */}
-        <section className="bg-[#f5f5f7] px-4 py-20 text-center sm:py-24">
+        <section className="bg-background px-4 py-20 text-center sm:py-24">
           <div className="mx-auto max-w-2xl">
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              {m['roompage.cta.title']({ room })}
+              {m['roompage.cta.title']({ cta_verb: p.ctaVerb, room })}
             </h2>
             <p className="text-muted-foreground mt-4 text-lg">
               {m['roompage.cta.desc']()}
@@ -310,7 +389,7 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
               href={studioHref}
               className="bg-primary mt-8 inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-lg font-medium text-white shadow-lg transition-all hover:bg-[#0077ed]"
             >
-              {m['roompage.cta.button']({ room })}
+              {m['roompage.cta.button']({ button_verb: p.buttonVerb, room })}
               <ArrowRight className="size-5" />
             </Link>
           </div>
@@ -402,6 +481,7 @@ export const ROOM_PATHS: Record<RoomLandingKey, string> = {
   basement: '/ai-basement-design',
   attic: '/ai-attic-design',
   study: '/ai-study-room-design',
+  kids: '/ai-kids-room-design',
   planner: '/ai-room-planner',
   makeover: '/ai-room-makeover',
   organizer: '/ai-room-organizer',

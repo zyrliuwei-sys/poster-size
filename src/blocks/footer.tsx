@@ -37,6 +37,10 @@ export function Footer() {
               href: '/ai-home-office-design',
             },
             {
+              label: m['landing.rooms.kids'](),
+              href: '/ai-kids-room-design',
+            },
+            {
               label: m['landing.rooms.basement'](),
               href: '/ai-basement-design',
             },

@@ -66,6 +66,11 @@ const STATIC_PAGES: { path: string; title: string; description: string }[] = [
     description: 'Shelving and desk ideas from one photo',
   },
   {
+    path: '/ai-kids-room-design',
+    title: 'AI Kids Room Design',
+    description: 'Sleep, play and study zones from one photo',
+  },
+  {
     path: '/ai-room-planner',
     title: 'AI Room Planner',
     description: 'Plan furniture layouts from a photo or floor plan',

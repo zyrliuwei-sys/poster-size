@@ -94,7 +94,12 @@ export function FreeGenerator() {
                   <AccordionTrigger className="cursor-pointer py-6 text-left text-lg font-medium hover:no-underline">
                     {m[`free.faq.${key}` as 'free.faq.q1']()}
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground pb-6 text-base leading-relaxed">
+                  {/* keepMounted: answer stays in the served HTML so it
+                      matches the FAQPage JSON-LD verbatim. */}
+                  <AccordionContent
+                    keepMounted
+                    className="text-muted-foreground pb-6 text-base leading-relaxed"
+                  >
                     {m[`free.faq.a${key.slice(1)}` as 'free.faq.a1']()}
                   </AccordionContent>
                 </AccordionItem>

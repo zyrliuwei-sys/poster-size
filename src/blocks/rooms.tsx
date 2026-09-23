@@ -9,6 +9,7 @@ const ROOMS = [
   { key: 'kitchen', href: '/ai-kitchen-design' },
   { key: 'dining', href: '/ai-dining-room-design' },
   { key: 'office', href: '/ai-home-office-design' },
+  { key: 'kids', href: '/ai-kids-room-design' },
   { key: 'basement', href: '/ai-basement-design' },
   { key: 'attic', href: '/ai-attic-design' },
   { key: 'study', href: '/ai-study-room-design' },
