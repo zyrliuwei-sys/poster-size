@@ -107,10 +107,10 @@ export function SiteFooter({
           ) : (
             <div />
           )}
-          <LocaleSelector
+          {/* <LocaleSelector
             variant="pill"
             className="border-neutral-700 text-neutral-200 hover:bg-white/5 hover:text-neutral-50"
-          />
+          /> */}
         </div>
 
         {/* Bottom bar */}
