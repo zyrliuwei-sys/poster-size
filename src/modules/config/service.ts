@@ -14,6 +14,22 @@ let cachedConfigs: ConfigMap | null = null;
 let cacheTime = 0;
 const CACHE_TTL = 3600_000; // 1 hour
 
+function hasCloudflareDatabaseBinding(): boolean {
+  if (typeof globalThis === 'undefined') return false;
+
+  const runtime = globalThis as typeof globalThis & {
+    __CF_ENV__?: { DB?: unknown; HYPERDRIVE?: unknown };
+    __env__?: { DB?: unknown; HYPERDRIVE?: unknown };
+  };
+
+  return Boolean(
+    runtime.__CF_ENV__?.DB ||
+    runtime.__CF_ENV__?.HYPERDRIVE ||
+    runtime.__env__?.DB ||
+    runtime.__env__?.HYPERDRIVE
+  );
+}
+
 /**
  * Get all configs from database.
  */
@@ -24,7 +40,13 @@ export async function getDbConfigs(): Promise<ConfigMap> {
   }
 
   try {
-    if (!envConfigs.database_url && envConfigs.database_provider !== 'd1') {
+    // Cloudflare Workers can use D1 or Hyperdrive without DATABASE_URL.
+    // Hyperdrive is injected by src/server.ts before route handlers run.
+    if (
+      !envConfigs.database_url &&
+      envConfigs.database_provider !== 'd1' &&
+      !hasCloudflareDatabaseBinding()
+    ) {
       return {};
     }
 

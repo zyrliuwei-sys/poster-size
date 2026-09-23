@@ -6,7 +6,7 @@ import { getLocalPosts, mergePosts } from '@/content/posts';
 
 import { ROOM_PATHS } from './(rooms)/-room-landing';
 
-const STATIC_PATHS = [
+export const STATIC_PATHS = [
   '',
   '/room-design',
   '/ai-room-design-free',

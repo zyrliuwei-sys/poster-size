@@ -30,16 +30,20 @@ type StoredSettings = {
   lastError: string | null;
 };
 
-async function readConfig(name: string, secret = false) {
+async function readConfig(
+  name: string,
+  secret = false
+): Promise<string | undefined> {
   const [row] = await db()
     .select({ value: config.value })
     .from(config)
     .where(eq(config.name, name))
     .limit(1);
 
-  if (!row?.value) return undefined;
-  if (!secret || !isEncryptedSecret(row.value)) return row.value;
-  return (await decryptSecret(row.value)) ?? undefined;
+  const value = row?.value;
+  if (typeof value !== 'string' || value.length === 0) return undefined;
+  if (!secret || !isEncryptedSecret(value)) return value;
+  return (await decryptSecret(value)) ?? undefined;
 }
 
 async function upsertConfigs(entries: Array<[string, string]>) {
@@ -65,8 +69,11 @@ async function getStoredSettings(): Promise<StoredSettings> {
     .select({ name: config.name, value: config.value })
     .from(config)
     .where(inArray(config.name, CONFIG_NAMES));
-  const values = new Map(
-    rows.map((row) => [row.name, row.value ?? undefined] as const)
+  const values = new Map<string, string | undefined>(
+    rows.map((row: { name: string; value: string | null }) => [
+      row.name,
+      row.value ?? undefined,
+    ])
   );
   const encryptedApiKey = values.get(API_KEY_CONFIG);
   const apiKey = encryptedApiKey
@@ -225,8 +232,13 @@ export async function getSitemapUrls(origin: string): Promise<string[]> {
   return Array.from(new Set([...urls, ...alternateUrls]));
 }
 
-export async function submitSitemapUrls(origin: string) {
-  return submitIndexNowUrls(origin, await getSitemapUrls(origin));
+export async function submitSitemapUrls(
+  origin: string,
+  generatedUrls: string[] = []
+) {
+  const urls =
+    generatedUrls.length > 0 ? generatedUrls : await getSitemapUrls(origin);
+  return submitIndexNowUrls(origin, urls);
 }
 
 export async function verifyIndexNowKey(origin: string) {

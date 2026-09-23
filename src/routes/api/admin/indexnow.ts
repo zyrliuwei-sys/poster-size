@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { normalizeIndexNowKey } from '@/features/indexnow/validation';
+import { STATIC_PATHS } from '@/routes/sitemap[.]xml';
 
 import { getAuth } from '@/core/auth';
 import {
@@ -8,8 +9,11 @@ import {
   submitSitemapUrls,
   verifyIndexNowKey,
 } from '@/modules/indexnow/service';
+import * as postsService from '@/modules/posts/service';
 import { hasPermission } from '@/modules/rbac/service';
 import { respData, respErr } from '@/lib/resp';
+import { baseLocale } from '@/paraglide/runtime.js';
+import { getLocalPosts, mergePosts, type BlogPost } from '@/content/posts';
 
 const noStore = {
   headers: {
@@ -19,6 +23,38 @@ const noStore = {
 
 function requestOrigin(request: Request) {
   return new URL(request.url).origin;
+}
+
+async function generatedSiteUrls(origin: string) {
+  const paths = [...STATIC_PATHS];
+  const dbPosts: BlogPost[] = [];
+  try {
+    const posts = await postsService.listPublishedArticles({ limit: 10_000 });
+    dbPosts.push(
+      ...posts.map((post) => ({
+        slug: post.slug,
+        title: post.title || post.slug,
+        description: post.description || '',
+        createdAt: new Date(post.createdAt).toISOString(),
+        source: 'db' as const,
+      }))
+    );
+  } catch {
+    // Local posts and static URLs still work when the DB is offline.
+  }
+  for (const post of mergePosts(dbPosts, getLocalPosts(baseLocale))) {
+    paths.push(`/blog/${encodeURIComponent(post.slug)}`);
+  }
+
+  return Array.from(
+    new Set(
+      paths.flatMap((path) => {
+        const english = new URL(path || '/', origin).href;
+        const chinese = new URL(path ? `/zh${path}` : '/zh', origin).href;
+        return [english, chinese];
+      })
+    )
+  );
 }
 
 async function checkPermission(request: Request, permission: string) {
@@ -62,7 +98,10 @@ async function POST({ request }: { request: Request }) {
       let submissionError: string | undefined;
       if (enabled && autoSubmit) {
         try {
-          submission = await submitSitemapUrls(origin);
+          submission = await submitSitemapUrls(
+            origin,
+            await generatedSiteUrls(origin)
+          );
         } catch (error) {
           submissionError =
             error instanceof Error
@@ -82,7 +121,10 @@ async function POST({ request }: { request: Request }) {
     }
 
     if (action === 'submit') {
-      return respData(await submitSitemapUrls(origin), noStore);
+      return respData(
+        await submitSitemapUrls(origin, await generatedSiteUrls(origin)),
+        noStore
+      );
     }
 
     if (action === 'verify') {
