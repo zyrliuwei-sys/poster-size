@@ -40,7 +40,7 @@ export function Hero() {
 
         <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
-            href="/#design-studio"
+            href="/room-design"
             className="bg-primary rounded-full px-8 py-3 text-lg font-medium text-white shadow-lg transition-all hover:bg-[#0077ed] hover:shadow-xl"
           >
             {m['landing.hero.cta']()}
