@@ -1,9 +1,10 @@
-import type {
-  StorageConfigs,
-  StorageDownloadUploadOptions,
-  StorageProvider,
-  StorageUploadOptions,
-  StorageUploadResult,
+import {
+  normalizePublicDomain,
+  type StorageConfigs,
+  type StorageDownloadUploadOptions,
+  type StorageProvider,
+  type StorageUploadOptions,
+  type StorageUploadResult,
 } from '.';
 
 /**
@@ -34,9 +35,8 @@ export class S3Provider implements StorageProvider {
   getPublicUrl = (options: { key: string; bucket?: string }) => {
     const uploadBucket = options.bucket || this.configs.bucket;
     const url = `${this.configs.endpoint}/${uploadBucket}/${options.key}`;
-    return this.configs.publicDomain
-      ? `${this.configs.publicDomain}/${options.key}`
-      : url;
+    const publicDomain = normalizePublicDomain(this.configs.publicDomain);
+    return publicDomain ? `${publicDomain}/${options.key}` : url;
   };
 
   exists = async (options: { key: string; bucket?: string }) => {

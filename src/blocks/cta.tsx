@@ -1,34 +1,25 @@
-import { ArrowRight } from 'lucide-react';
-
 import { Link } from '@/core/i18n/navigation';
-import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
-import { buttonVariants } from '@/components/ui/button';
 
+/**
+ * Final CTA — Apple-style centered closer.
+ */
 export function CTA() {
   return (
-    <section className="px-4 pb-24 sm:pb-24">
-      <div className="mx-auto max-w-5xl">
-        <div className="rounded-3xl border border-dashed px-6 py-12 text-center sm:px-10 sm:py-16">
-          <h2 className="mx-auto max-w-3xl font-serif text-4xl leading-[1.1] font-medium tracking-tight sm:text-5xl lg:text-5xl">
-            {m['landing.cta.headline']()}
-          </h2>
-          <p className="text-muted-foreground mx-auto mt-6 max-w-4xl text-base leading-relaxed sm:text-lg">
-            {m['landing.cta.subheadline']()}
-          </p>
-          <div className="mt-8 flex justify-center">
-            <Link
-              href="/settings"
-              className={cn(
-                buttonVariants({ size: 'lg' }),
-                'h-12 gap-2 rounded-full px-8'
-              )}
-            >
-              {m['landing.cta.button']()}
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-        </div>
+    <section className="bg-background px-4 py-28 text-center sm:py-36">
+      <h2 className="mx-auto max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
+        {m['landing.cta.headline']()}
+      </h2>
+      <p className="text-muted-foreground mx-auto mt-5 max-w-xl text-lg">
+        {m['landing.cta.subheadline']()}
+      </p>
+      <div className="mt-8">
+        <Link
+          href="/room-design"
+          className="bg-primary inline-block rounded-full px-8 py-3.5 text-lg font-medium text-white shadow-lg transition-all hover:bg-[#0077ed] hover:shadow-xl"
+        >
+          {m['landing.cta.button']()}
+        </Link>
       </div>
     </section>
   );

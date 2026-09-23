@@ -1,0 +1,13 @@
+{
+  "name": "redocor ai",
+  "slug": "redocorai",
+  "description": "An AI floor-plan and room design platform that turns a room photo or layout into a photorealistic interior concept with one click.",
+  "support_email": "support@redocor.com",
+  "features": [
+    "One-click AI room design",
+    "AI floor-plan visualization",
+    "Photorealistic interior concepts",
+    "Room styles and custom instructions",
+    "Saved designs with image downloads"
+  ]
+}

@@ -44,6 +44,18 @@ export interface StorageConfigs {
 }
 
 /**
+ * Public storage domains are often entered as `cdn.example.com` in admin
+ * settings. Browser image/link consumers need an absolute URL, so normalize
+ * the protocol at the storage boundary instead of fixing every caller.
+ */
+export function normalizePublicDomain(domain?: string): string | undefined {
+  const value = domain?.trim().replace(/\/+$/, '');
+  if (!value) return undefined;
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://${value}`;
+}
+
+/**
  * Storage provider interface
  */
 export interface StorageProvider {

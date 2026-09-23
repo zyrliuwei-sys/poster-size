@@ -1,9 +1,10 @@
-import type {
-  StorageConfigs,
-  StorageDownloadUploadOptions,
-  StorageProvider,
-  StorageUploadOptions,
-  StorageUploadResult,
+import {
+  normalizePublicDomain,
+  type StorageConfigs,
+  type StorageDownloadUploadOptions,
+  type StorageProvider,
+  type StorageUploadOptions,
+  type StorageUploadResult,
 } from '.';
 
 /**
@@ -55,9 +56,8 @@ export class R2Provider implements StorageProvider {
     const uploadBucket = options.bucket || this.configs.bucket;
     const uploadPath = this.getUploadPath();
     const url = `${this.getEndpoint()}/${uploadBucket}/${uploadPath}/${options.key}`;
-    return this.configs.publicDomain
-      ? `${this.configs.publicDomain}/${uploadPath}/${options.key}`
-      : url;
+    const publicDomain = normalizePublicDomain(this.configs.publicDomain);
+    return publicDomain ? `${publicDomain}/${uploadPath}/${options.key}` : url;
   };
 
   exists = async (options: { key: string; bucket?: string }) => {

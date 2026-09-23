@@ -52,6 +52,8 @@ export async function runTest(
         return await testR2(inputs, configs);
       case 'openai':
         return await testOpenAI(inputs, configs);
+      case 'evolink':
+        return await testEvoLink(inputs, configs);
       case 'anthropic':
         return await testAnthropic(inputs, configs);
       case 'replicate':
@@ -404,6 +406,72 @@ async function testOpenAI(
       Model: data?.model || inputs.model,
       Reply: reply.slice(0, 200) || '(empty)',
     },
+  };
+}
+
+// --- EvoLink --------------------------------------------------------------
+
+async function testEvoLink(
+  _inputs: Record<string, string>,
+  configs: Record<string, string>
+): Promise<TestResult> {
+  const missing = need(configs, ['evolink_api_key']);
+  if (missing) return { success: false, message: missing };
+
+  // EvoLink's documented base URL is the host without `/v1`; accept both
+  // forms so an admin can paste either the docs value or an OpenAI-style URL.
+  const configuredBaseUrl = (
+    configs.evolink_base_url || 'https://api.evolink.ai'
+  ).trim();
+  let baseUrl = configuredBaseUrl;
+  try {
+    const url = new URL(configuredBaseUrl);
+    if (url.hostname === 'evolink.ai' || url.hostname === 'www.evolink.ai') {
+      url.hostname = 'api.evolink.ai';
+      url.pathname = '';
+      url.search = '';
+      url.hash = '';
+    }
+    baseUrl = url.toString().replace(/\/+$/, '').replace(/\/v1$/, '');
+  } catch {
+    baseUrl = 'https://api.evolink.ai';
+  }
+  const resp = await fetch(`${baseUrl}/v1/credits`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${configs.evolink_api_key}`,
+    },
+  });
+
+  const data: any = await resp.json().catch(() => ({}));
+  if (!resp.ok || data?.success === false) {
+    return {
+      success: false,
+      message:
+        data?.error?.message ||
+        data?.message ||
+        `Request failed (${resp.status})`,
+    };
+  }
+
+  const userCredits = data?.data?.user;
+  const tokenCredits = data?.data?.token;
+  const details: Record<string, string> = {
+    Endpoint: `${baseUrl}/v1/credits`,
+  };
+  if (userCredits?.remaining_credits !== undefined) {
+    details['User credits remaining'] = String(userCredits.remaining_credits);
+  }
+  if (tokenCredits?.remaining_credits !== undefined) {
+    details['Token credits remaining'] = tokenCredits.unlimited_credits
+      ? 'Unlimited'
+      : String(tokenCredits.remaining_credits);
+  }
+
+  return {
+    success: true,
+    message: 'EvoLink API key is valid',
+    details,
   };
 }
 

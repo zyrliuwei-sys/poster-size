@@ -3,34 +3,38 @@ import { createFileRoute } from '@tanstack/react-router';
 import { envConfigs } from '@/config';
 import { m } from '@/paraglide/messages.js';
 import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
-import { Blog } from '@/blocks/blog';
+import { Audiences } from '@/blocks/audiences';
+import { Compare } from '@/blocks/compare';
 import { CTA } from '@/blocks/cta';
-import { FAQ } from '@/blocks/faq';
+import { FAQ, FAQ_KEYS } from '@/blocks/faq';
 import { Features } from '@/blocks/features';
+import { Floorplan } from '@/blocks/floorplan';
 import { Footer } from '@/blocks/footer';
+import { FreeTier } from '@/blocks/free-tier';
+import { Gallery } from '@/blocks/gallery';
 import { Header } from '@/blocks/header';
 import { Hero } from '@/blocks/hero';
-import { Pricing } from '@/blocks/pricing';
+import { HowItWorks } from '@/blocks/how-it-works';
+import { Rooms } from '@/blocks/rooms';
+import { Stats } from '@/blocks/stats';
 import { SupportWidget } from '@/blocks/support-widget';
-import { getBlogPostsFn } from '@/content/posts/server';
 
-/**
- * Default landing page — demo content. Rewrite this file (and the blocks in
- * src/blocks/) for your project. The primitives in src/components/ stay.
- * See /quick-start or /clone-website to automate the rewrite.
- */
 function HomePage() {
-  const { posts } = Route.useLoaderData();
-
   return (
     <div className="bg-background text-foreground flex min-h-screen flex-col">
       <Header />
       <main>
         <Hero />
+        <HowItWorks />
         <Features />
-        <Pricing />
+        <Stats />
+        <Gallery />
+        <Floorplan />
+        <FreeTier />
+        <Compare />
+        <Rooms />
+        <Audiences />
         <FAQ />
-        <Blog posts={posts} />
         <CTA />
       </main>
       <Footer />
@@ -39,11 +43,56 @@ function HomePage() {
   );
 }
 
+/** Schema.org @graph — WebApplication + FAQPage (mirrors the on-page FAQ) + BreadcrumbList. */
+function seoSchema(locale: string, homeUrl: string) {
+  const L = locale as any;
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: `${envConfigs.app_name} — AI Room Design`,
+        url: homeUrl,
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'Web browser',
+        offers: {
+          '@type': 'Offer',
+          price: '5',
+          priceCurrency: 'USD',
+          description: 'Paid room-design credits start at $5; sign-in required',
+        },
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: FAQ_KEYS.map((key) => ({
+          '@type': 'Question',
+          name: m[`landing.faq.${key}.question` as 'landing.faq.free.question'](
+            {},
+            { locale: L }
+          ),
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: m[`landing.faq.${key}.answer` as 'landing.faq.free.answer'](
+              {},
+              { locale: L }
+            ),
+          },
+        })),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: homeUrl },
+        ],
+      },
+    ],
+  };
+}
+
 export const Route = createFileRoute('/')({
-  loader: async () => {
+  loader: () => {
     const locale = getLocale();
-    const posts = await getBlogPostsFn({ data: { locale, limit: 3 } });
-    return { locale, posts };
+    return { locale };
   },
   head: ({ loaderData }) => {
     const locale = loaderData?.locale ?? 'en';
@@ -51,10 +100,15 @@ export const Route = createFileRoute('/')({
       localizeUrl(`${envConfigs.app_url}/`, { locale: loc as any }).href;
     return {
       meta: [
+        { title: m['common.metadata.title']({}, { locale: locale as any }) },
         {
           name: 'description',
-          content: m['landing.hero.subheadline']({}, { locale: locale as any }),
+          content: m['common.metadata.description'](
+            {},
+            { locale: locale as any }
+          ),
         },
+        { name: 'robots', content: 'index,follow' },
       ],
       links: [
         { rel: 'canonical', href: urlFor(locale) },
@@ -64,6 +118,12 @@ export const Route = createFileRoute('/')({
           href: urlFor(loc),
         })),
         { rel: 'alternate', hrefLang: 'x-default', href: urlFor('en') },
+      ],
+      scripts: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(seoSchema(locale, urlFor(locale))),
+        },
       ],
     };
   },

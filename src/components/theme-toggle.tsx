@@ -5,13 +5,14 @@ import { useTheme } from 'next-themes';
 
 import { Button } from '@/components/ui/button';
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
 
   return (
     <Button
       variant="ghost"
       size="icon"
+      className={className}
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
     >
       <Sun className="size-4 dark:hidden" />

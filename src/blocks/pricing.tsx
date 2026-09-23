@@ -7,7 +7,6 @@ import {
   Folder,
   Folders,
   Headphones,
-  Infinity as InfinityIcon,
   Mail,
   Puzzle,
   Sparkles,
@@ -18,6 +17,7 @@ import { toast } from 'sonner';
 
 import { useSession } from '@/core/auth/client';
 import { useRouter } from '@/core/i18n/navigation';
+import { creditsForPriceInCents } from '@/config/design-pricing';
 import { apiPost } from '@/lib/api-client';
 import { currentPathWithQuery } from '@/lib/redirect';
 import { m } from '@/paraglide/messages.js';
@@ -56,29 +56,53 @@ export function Pricing({ title }: { title?: string } = {}) {
     [configs]
   );
 
-  const starterFeatures = [
+  const creditsFeature = (priceInCents: number) => ({
+    icon: Sparkles,
+    label: m['landing.pricing.credits']({
+      credits: creditsForPriceInCents(priceInCents).toLocaleString(),
+    }),
+  });
+
+  const designsFeature = (priceInCents: number) => ({
+    icon: Check,
+    label: m['landing.pricing.designs']({
+      count: Math.floor(
+        creditsForPriceInCents(priceInCents) / 14
+      ).toLocaleString(),
+    }),
+  });
+
+  const hobbyFeatures = (priceInCents: number) => [
     { icon: Folder, label: m['landing.pricing.feature_1_project']() },
-    { icon: Sparkles, label: m['landing.pricing.feature_5k_credits']() },
+    creditsFeature(priceInCents),
+    designsFeature(priceInCents),
     { icon: Mail, label: m['landing.pricing.feature_email_support']() },
   ];
-  const proFeatures = [
+  const designerFeatures = (priceInCents: number) => [
     { icon: Folders, label: m['landing.pricing.feature_unlimited_projects']() },
-    { icon: Sparkles, label: m['landing.pricing.feature_50k_credits']() },
+    creditsFeature(priceInCents),
+    designsFeature(priceInCents),
     { icon: Zap, label: m['landing.pricing.feature_priority_support']() },
     { icon: Terminal, label: m['landing.pricing.feature_api_access']() },
   ];
-  const enterpriseFeatures = [
+  const studioFeatures = (priceInCents: number) => [
     { icon: Check, label: m['landing.pricing.feature_everything_pro']() },
-    {
-      icon: InfinityIcon,
-      label: m['landing.pricing.feature_unlimited_credits'](),
-    },
+    creditsFeature(priceInCents),
+    designsFeature(priceInCents),
     {
       icon: Headphones,
       label: m['landing.pricing.feature_dedicated_support'](),
     },
     { icon: Puzzle, label: m['landing.pricing.feature_custom_integrations']() },
   ];
+
+  const hobby = m['landing.pricing.starter']();
+  const designer = m['landing.pricing.pro']();
+  const studio = m['landing.pricing.enterprise']();
+
+  const oneTime = { hobby: 500, designer: 1500, studio: 3900 } as const;
+  const monthly = { hobby: 900, designer: 1900, studio: 3900 } as const;
+  const yearly = { hobby: 7900, designer: 16900, studio: 34900 } as const;
 
   const groups: PricingGroup[] = [
     {
@@ -87,43 +111,43 @@ export function Pricing({ title }: { title?: string } = {}) {
       plans: [
         {
           id: 'starter-monthly',
-          name: m['landing.pricing.starter'](),
+          name: hobby,
           description: m['landing.pricing.starter_desc'](),
           price: '$9',
           interval: 'mo',
-          features: starterFeatures,
+          features: hobbyFeatures(monthly.hobby),
           productId: 'starter_monthly',
-          priceInCents: 900,
+          priceInCents: monthly.hobby,
           currency: 'usd',
-          credits: 5000,
+          credits: creditsForPriceInCents(monthly.hobby),
           plan: { name: 'Starter', interval: 'month', intervalCount: 1 },
         },
         {
           id: 'pro-monthly',
-          name: m['landing.pricing.pro'](),
+          name: designer,
           description: m['landing.pricing.pro_desc'](),
-          price: '$29',
+          price: '$19',
           interval: 'mo',
           featured: true,
           badge: m['landing.pricing.popular'](),
-          features: proFeatures,
+          features: designerFeatures(monthly.designer),
           productId: 'pro_monthly',
-          priceInCents: 2900,
+          priceInCents: monthly.designer,
           currency: 'usd',
-          credits: 50000,
+          credits: creditsForPriceInCents(monthly.designer),
           plan: { name: 'Pro', interval: 'month', intervalCount: 1 },
         },
         {
           id: 'enterprise-monthly',
-          name: m['landing.pricing.enterprise'](),
+          name: studio,
           description: m['landing.pricing.enterprise_desc'](),
-          price: '$99',
+          price: '$39',
           interval: 'mo',
-          features: enterpriseFeatures,
+          features: studioFeatures(monthly.studio),
           productId: 'enterprise_monthly',
-          priceInCents: 9900,
+          priceInCents: monthly.studio,
           currency: 'usd',
-          credits: 500000,
+          credits: creditsForPriceInCents(monthly.studio),
           plan: { name: 'Enterprise', interval: 'month', intervalCount: 1 },
         },
       ],
@@ -134,91 +158,97 @@ export function Pricing({ title }: { title?: string } = {}) {
       plans: [
         {
           id: 'starter-yearly',
-          name: m['landing.pricing.starter'](),
+          name: hobby,
           description: m['landing.pricing.starter_desc'](),
-          price: '$86',
-          originalPrice: '$108',
-          interval: 'yr',
-          features: starterFeatures,
+          price: '$7',
+          originalPrice: '$9',
+          interval: 'mo',
+          billingNote: m['landing.pricing.billed_annually']({ price: '$79' }),
+          checkoutPrice: '$79 / year',
+          features: hobbyFeatures(yearly.hobby),
           productId: 'starter_yearly',
-          priceInCents: 8600,
+          priceInCents: yearly.hobby,
           currency: 'usd',
-          credits: 60000,
+          credits: creditsForPriceInCents(yearly.hobby),
           plan: { name: 'Starter', interval: 'year', intervalCount: 1 },
         },
         {
           id: 'pro-yearly',
-          name: m['landing.pricing.pro'](),
+          name: designer,
           description: m['landing.pricing.pro_desc'](),
-          price: '$278',
-          originalPrice: '$348',
-          interval: 'yr',
+          price: '$14',
+          originalPrice: '$19',
+          interval: 'mo',
+          billingNote: m['landing.pricing.billed_annually']({ price: '$169' }),
+          checkoutPrice: '$169 / year',
           featured: true,
           badge: m['landing.pricing.popular'](),
-          features: proFeatures,
+          features: designerFeatures(yearly.designer),
           productId: 'pro_yearly',
-          priceInCents: 27800,
+          priceInCents: yearly.designer,
           currency: 'usd',
-          credits: 600000,
+          credits: creditsForPriceInCents(yearly.designer),
           plan: { name: 'Pro', interval: 'year', intervalCount: 1 },
         },
         {
           id: 'enterprise-yearly',
-          name: m['landing.pricing.enterprise'](),
+          name: studio,
           description: m['landing.pricing.enterprise_desc'](),
-          price: '$950',
-          originalPrice: '$1,188',
-          interval: 'yr',
-          features: enterpriseFeatures,
+          price: '$29',
+          originalPrice: '$39',
+          interval: 'mo',
+          billingNote: m['landing.pricing.billed_annually']({ price: '$349' }),
+          checkoutPrice: '$349 / year',
+          features: studioFeatures(yearly.studio),
           productId: 'enterprise_yearly',
-          priceInCents: 95000,
+          priceInCents: yearly.studio,
           currency: 'usd',
-          credits: 6000000,
+          credits: creditsForPriceInCents(yearly.studio),
           plan: { name: 'Enterprise', interval: 'year', intervalCount: 1 },
         },
       ],
     },
     {
-      key: 'lifetime',
-      label: m['landing.pricing.lifetime'](),
+      key: 'one-time',
+      label: m['landing.pricing.one_time'](),
       plans: [
         {
-          id: 'starter-lifetime',
-          name: m['landing.pricing.starter'](),
+          id: 'hobby-one-time',
+          name: hobby,
           description: m['landing.pricing.starter_desc'](),
-          price: '$149',
-          features: starterFeatures,
-          productId: 'starter_lifetime',
-          priceInCents: 14900,
+          price: '$5',
+          features: hobbyFeatures(oneTime.hobby),
+          productId: 'hobby_one_time',
+          priceInCents: oneTime.hobby,
           currency: 'usd',
-          credits: 100000,
-          buttonText: m['landing.pricing.buy_lifetime'](),
+          credits: creditsForPriceInCents(oneTime.hobby),
+          buttonText: m['landing.pricing.buy_one_time'](),
         },
         {
-          id: 'pro-lifetime',
-          name: m['landing.pricing.pro'](),
+          id: 'designer-one-time',
+          name: designer,
           description: m['landing.pricing.pro_desc'](),
-          price: '$499',
-          features: proFeatures,
+          price: '$15',
+          features: designerFeatures(oneTime.designer),
           featured: true,
           badge: m['landing.pricing.best_value'](),
-          productId: 'pro_lifetime',
-          priceInCents: 49900,
+          productId: 'designer_one_time',
+          priceInCents: oneTime.designer,
           currency: 'usd',
-          credits: 1000000,
-          buttonText: m['landing.pricing.buy_lifetime'](),
+          credits: creditsForPriceInCents(oneTime.designer),
+          buttonText: m['landing.pricing.buy_one_time'](),
         },
         {
-          id: 'enterprise-lifetime',
-          name: m['landing.pricing.enterprise'](),
+          id: 'studio-one-time',
+          name: studio,
           description: m['landing.pricing.enterprise_desc'](),
-          price: '$1,999',
-          features: enterpriseFeatures,
-          productId: 'enterprise_lifetime',
-          priceInCents: 199900,
+          price: '$39',
+          features: studioFeatures(oneTime.studio),
+          productId: 'studio_one_time',
+          priceInCents: oneTime.studio,
           currency: 'usd',
-          credits: 10000000,
-          buttonText: m['landing.pricing.buy_lifetime'](),
+          credits: creditsForPriceInCents(oneTime.studio),
+          buttonText: m['landing.pricing.buy_one_time'](),
         },
       ],
     },
@@ -299,10 +329,10 @@ export function Pricing({ title }: { title?: string } = {}) {
     >
       <div className="mx-auto max-w-5xl">
         <div className="mb-20 text-center">
-          <h2 className="font-serif text-4xl font-normal tracking-tight sm:text-5xl">
+          <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl">
             {title ?? m['landing.pricing.title']()}
           </h2>
-          <p className="text-muted-foreground mt-5">
+          <p className="text-muted-foreground mt-5 text-lg">
             {m['landing.pricing.description']()}
           </p>
         </div>
@@ -322,7 +352,7 @@ export function Pricing({ title }: { title?: string } = {}) {
         loadingProvider={loadingProvider}
         onSelect={handleProviderSelect}
         planName={pendingPlan?.name}
-        price={pendingPlan?.price}
+        price={pendingPlan?.checkoutPrice || pendingPlan?.price}
       />
     </section>
   );

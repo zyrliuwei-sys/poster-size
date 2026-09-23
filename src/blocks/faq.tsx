@@ -1,4 +1,3 @@
-import { tDynamic } from '@/core/i18n/dynamic';
 import { m } from '@/paraglide/messages.js';
 import {
   Accordion,
@@ -7,34 +6,45 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-const FAQ_KEYS = [
-  'stack',
-  'payment',
-  'database',
-  'customize',
-  'license',
+/** FAQ keys in display order — also used to build the FAQPage JSON-LD schema. */
+export const FAQ_KEYS = [
+  'free',
+  'login',
+  'layout',
+  'room_types',
+  'styles',
+  'phone',
+  'time',
+  'commercial',
+  'floorplan',
+  'declutter',
 ] as const;
 
+/**
+ * FAQ — Apple-style minimal accordion.
+ */
 export function FAQ() {
   return (
-    <section id="faq" className="px-4 py-24 sm:py-32">
+    <section id="faq" className="bg-[#f5f5f7] px-4 py-24 sm:py-32">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-16 text-center">
-          <h2 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">
+        <div className="mb-14 text-center">
+          <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
             {m['landing.faq.title']()}
           </h2>
-          <p className="text-muted-foreground mt-5">
+          <p className="text-muted-foreground mt-4 text-lg">
             {m['landing.faq.description']()}
           </p>
         </div>
         <Accordion className="w-full">
           {FAQ_KEYS.map((key) => (
             <AccordionItem key={key} value={key}>
-              <AccordionTrigger className="cursor-pointer py-6 text-left text-base font-medium hover:no-underline">
-                {tDynamic(`landing.faq.${key}.question`)}
+              <AccordionTrigger className="cursor-pointer py-6 text-left text-lg font-medium hover:no-underline">
+                {m[
+                  `landing.faq.${key}.question` as 'landing.faq.free.question'
+                ]()}
               </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground pb-6 leading-relaxed">
-                {tDynamic(`landing.faq.${key}.answer`)}
+              <AccordionContent className="text-muted-foreground pb-6 text-base leading-relaxed">
+                {m[`landing.faq.${key}.answer` as 'landing.faq.free.answer']()}
               </AccordionContent>
             </AccordionItem>
           ))}

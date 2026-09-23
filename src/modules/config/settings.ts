@@ -160,6 +160,12 @@ export function getSettingGroups(): SettingGroup[] {
       tab: 'ai',
     },
     {
+      name: 'evolink',
+      title: 'EvoLink',
+      description: 'EvoLink AI gateway API',
+      tab: 'ai',
+    },
+    {
       name: 'anthropic',
       title: 'Anthropic',
       description: 'Anthropic Claude API',
@@ -784,6 +790,24 @@ export function getSettings(): Setting[] {
       type: 'password',
       placeholder: 'sk-xxx',
       group: 'openai',
+      tab: 'ai',
+    },
+
+    // ─── AI / EvoLink ────────────────────────────────────────────────
+    {
+      name: 'evolink_base_url',
+      title: 'Base URL',
+      type: 'text',
+      placeholder: 'https://api.evolink.ai',
+      group: 'evolink',
+      tab: 'ai',
+    },
+    {
+      name: 'evolink_api_key',
+      title: 'API Key',
+      type: 'password',
+      placeholder: 'YOUR_API_KEY',
+      group: 'evolink',
       tab: 'ai',
     },
 

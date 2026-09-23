@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 70">
+  <!-- House icon -->
+  <path d="M30 52V30h-6l21-20 21 20h-6v22H30z" fill="none" stroke="#E8820C" stroke-width="5" stroke-linejoin="round"/>
+  <!-- ASHLEY text -->
+  <text x="75" y="48" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="42" fill="#333" letter-spacing="3">ASHLEY</text>
+</svg>

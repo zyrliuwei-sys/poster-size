@@ -172,6 +172,10 @@ export const testSpecs: Record<string, TestSpec> = {
       },
     ],
   },
+  evolink: {
+    group: 'evolink',
+    fields: [],
+  },
   anthropic: {
     group: 'anthropic',
     fields: [
