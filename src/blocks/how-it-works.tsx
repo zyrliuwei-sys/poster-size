@@ -16,9 +16,9 @@ const STEPS = [
     desc: m['landing.how.step2.desc'],
   },
   {
-    img: '/imgs/steps/step3.webp',
-    width: 860,
-    height: 462,
+    img: '/imgs/demo/diningRoom-modern.avif',
+    width: 1376,
+    height: 768,
     title: m['landing.how.step3.title'],
     desc: m['landing.how.step3.desc'],
   },

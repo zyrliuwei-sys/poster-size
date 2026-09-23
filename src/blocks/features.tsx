@@ -20,7 +20,7 @@ const ITEMS = [
  */
 export function Features() {
   return (
-    <section className="bg-background px-4 py-24 sm:py-32">
+    <section className="bg-background px-4 pt-24 pb-10 sm:pt-32 sm:pb-12">
       <div className="mx-auto max-w-6xl">
         <div className="mb-14 text-center">
           <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">

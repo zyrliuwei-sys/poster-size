@@ -1,10 +1,9 @@
-import type { ComponentType, SVGProps } from 'react';
+import type { ComponentType, CSSProperties, SVGProps } from 'react';
 
 import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { cn } from '@/lib/utils';
 import { FooterBadgeList } from '@/components/footer-badge-list';
-import { LocaleSelector } from '@/components/locale-selector';
 
 export interface FooterColumn {
   title: string;
@@ -22,108 +21,127 @@ export interface FooterSocial {
 }
 
 export function SiteFooter({
-  tagline,
   columns,
   socials,
   copyright,
 }: {
-  tagline?: string;
   columns?: FooterColumn[];
   socials?: FooterSocial[];
   copyright?: string;
 }) {
   const year = new Date().getFullYear();
+  const pages = columns?.flatMap((column) => column.links) ?? [];
 
   return (
-    <footer className="bg-neutral-950 text-neutral-100">
-      <div className="mx-auto max-w-7xl px-6 pt-14 pb-6 sm:px-10 sm:pt-16 lg:px-16">
-        {tagline && (
-          <p className="mb-12 max-w-2xl font-serif text-3xl leading-[1.15] tracking-tight text-neutral-100 italic sm:text-4xl">
-            {tagline}
-          </p>
-        )}
-
-        {columns && columns.length > 0 && (
-          <div
-            className={cn(
-              'grid gap-x-8 gap-y-10 sm:gap-x-12',
-              columns.length <= 3
-                ? 'grid-cols-2 sm:grid-cols-3'
-                : columns.length === 4
-                  ? 'grid-cols-2 sm:grid-cols-4'
-                  : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
-            )}
+    <footer className="relative w-full overflow-hidden border-t border-neutral-700 bg-neutral-800 px-4 py-14 text-neutral-100 sm:px-8 sm:py-20">
+      <div className="mx-auto max-w-7xl text-sm text-neutral-400">
+        <div className="flex w-full flex-col items-center justify-center">
+          <Link
+            href="/"
+            aria-label={envConfigs.app_name}
+            className="relative z-20 flex items-center gap-3 px-2 py-1 text-sm font-normal"
           >
-            {columns.map((col) => (
-              <div key={col.title} className="space-y-5">
-                <p className="text-[13px] font-semibold tracking-wide text-neutral-100">
-                  {col.title}
-                </p>
-                <ul className="space-y-2">
-                  {col.links.map((link) => (
-                    <li key={link.label}>
-                      {isExternalHref(link.href) ? (
-                        <a
-                          href={link.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-neutral-400 transition-colors hover:text-neutral-100"
-                        >
-                          {link.label}
-                        </a>
-                      ) : (
-                        <Link
-                          href={link.href}
-                          target={link.external ? '_blank' : undefined}
-                          className="text-sm text-neutral-400 transition-colors hover:text-neutral-100"
-                        >
-                          {link.label}
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
+            <img
+              src={envConfigs.app_logo}
+              alt=""
+              width={30}
+              height={30}
+              className="size-[30px] rounded-md"
+            />
+            <span className="font-medium text-white">
+              {envConfigs.app_name}
+            </span>
+          </Link>
 
-        {/* Socials + language row */}
-        <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          {socials && socials.length > 0 ? (
-            <div className="flex items-center gap-5">
-              {socials.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  aria-label={s.label}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-neutral-300 transition-colors hover:text-neutral-100"
-                >
-                  <s.icon className="size-[18px]" />
-                </a>
+          {pages.length > 0 && (
+            <nav
+              aria-label="Footer navigation"
+              className="mt-6 flex list-none flex-wrap justify-center gap-x-6 gap-y-3 text-neutral-400"
+            >
+              {pages.map((link, index) => (
+                <span key={`${link.href}-${link.label}-${index}`}>
+                  {isExternalHref(link.href) ? (
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="transition-colors hover:text-white"
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link
+                      href={link.href}
+                      target={link.external ? '_blank' : undefined}
+                      className="transition-colors hover:text-white"
+                    >
+                      {link.label}
+                    </Link>
+                  )}
+                </span>
               ))}
-            </div>
-          ) : (
-            <div />
+            </nav>
           )}
-          {/* <LocaleSelector
-            variant="pill"
-            className="border-neutral-700 text-neutral-200 hover:bg-white/5 hover:text-neutral-50"
-          /> */}
+
+          <GridLineHorizontal className="mx-auto mt-8 max-w-7xl" />
         </div>
 
         <FooterBadgeList className="mt-8" />
 
-        {/* Bottom bar */}
-        <div className="mt-6 flex flex-col gap-3 border-t border-neutral-800 pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-sm text-neutral-400">
+        <div className="mt-8 flex w-full flex-col items-end justify-between gap-6 sm:flex-row">
+          <span className="text-right text-sm text-neutral-400">
             {copyright ||
               `© ${year} ${envConfigs.app_name}. All rights reserved.`}
           </span>
+          {socials && socials.length > 0 && (
+            <div className="flex items-center gap-5">
+              {socials.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  aria-label={social.label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-neutral-400 transition-colors hover:text-white"
+                >
+                  <social.icon className="size-[18px]" />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </footer>
+  );
+}
+
+function GridLineHorizontal({
+  className,
+  offset,
+}: {
+  className?: string;
+  offset?: string;
+}) {
+  return (
+    <div
+      style={
+        {
+          '--background': '#262626',
+          '--color': 'rgba(255, 255, 255, 0.18)',
+          '--height': '1px',
+          '--width': '5px',
+          '--fade-stop': '90%',
+          '--offset': offset || '200px',
+        } as CSSProperties
+      }
+      className={cn(
+        'z-30 h-[var(--height)] w-[calc(100%+var(--offset))]',
+        'bg-[linear-gradient(to_right,var(--color),var(--color)_50%,transparent_0,transparent)]',
+        '[background-size:var(--width)_var(--height)]',
+        '[mask:linear-gradient(to_left,var(--background)_var(--fade-stop),transparent),_linear-gradient(to_right,var(--background)_var(--fade-stop),transparent),_linear-gradient(black,black)]',
+        '[mask-composite:exclude]',
+        className
+      )}
+    />
   );
 }

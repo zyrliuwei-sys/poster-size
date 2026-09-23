@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { Link } from '@/core/i18n/navigation';
 import { m } from '@/paraglide/messages.js';
@@ -45,22 +45,13 @@ export function Hero() {
           >
             {m['landing.hero.cta']()}
           </Link>
-          <Link
-            href="/#how"
-            className="text-primary inline-flex items-center gap-1 text-lg transition-colors hover:underline"
-          >
-            {m['landing.hero.cta_secondary']()}
-            <ChevronRight className="size-5" />
-          </Link>
         </div>
-
-        <p className="text-muted-foreground mt-6 text-sm">
-          {m['landing.hero.trust']()}
-        </p>
       </div>
 
       {/* The studio itself — upload and design without leaving the page */}
-      <DesignStudio />
+      <div className="mt-10 sm:mt-14">
+        <DesignStudio />
+      </div>
 
       {/* Product video */}
       <div className="mx-auto mt-14 max-w-5xl px-0 sm:px-6">

@@ -26,7 +26,7 @@ const KEEPS = [
  */
 export function ChangesKeeps() {
   return (
-    <section className="bg-background px-4 py-24 sm:py-32">
+    <section className="bg-background px-4 pt-10 pb-12 sm:pt-12 sm:pb-16">
       <div className="mx-auto max-w-5xl">
         <div className="mb-14 text-center">
           <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">

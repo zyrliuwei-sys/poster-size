@@ -335,7 +335,7 @@ export function Pricing({
   return (
     <section
       id="pricing"
-      className="border-border border-t px-4 py-24 sm:py-32"
+      className="border-border border-t px-4 pt-24 pb-10 sm:pt-32 sm:pb-12"
     >
       <div className="mx-auto max-w-5xl">
         <div className="mb-20 text-center">

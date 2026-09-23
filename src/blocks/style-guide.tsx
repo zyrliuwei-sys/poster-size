@@ -18,7 +18,10 @@ const STYLES: Style[] = [
  */
 export function StyleGuide() {
   return (
-    <section id="styles" className="bg-[#f5f5f7] px-4 py-24 sm:py-32">
+    <section
+      id="styles"
+      className="bg-[#f5f5f7] px-4 pt-24 pb-12 sm:pt-32 sm:pb-16"
+    >
       <div className="mx-auto max-w-6xl">
         <div className="mb-14 text-center">
           <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">

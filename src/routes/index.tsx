@@ -16,6 +16,7 @@ import { Gallery } from '@/blocks/gallery';
 import { Header } from '@/blocks/header';
 import { Hero } from '@/blocks/hero';
 import { HowItWorks } from '@/blocks/how-it-works';
+import { Pricing } from '@/blocks/pricing';
 import { Rooms } from '@/blocks/rooms';
 import { StyleGuide } from '@/blocks/style-guide';
 import { SupportWidget } from '@/blocks/support-widget';
@@ -32,6 +33,7 @@ function HomePage() {
         <Gallery />
         <StyleGuide />
         <FreeTier />
+        <Pricing />
         <Compare />
         <Rooms />
         <Audiences />

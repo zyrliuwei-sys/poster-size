@@ -15,7 +15,10 @@ const BULLETS = [
  */
 export function FreeTier() {
   return (
-    <section id="free" className="bg-[#f5f5f7] px-4 py-24 sm:py-32">
+    <section
+      id="free"
+      className="bg-[#f5f5f7] px-4 pt-12 pb-24 sm:pt-16 sm:pb-32"
+    >
       <div className="mx-auto max-w-3xl">
         <div className="mb-10 text-center">
           <h2 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
