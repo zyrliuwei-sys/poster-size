@@ -1,22 +1,28 @@
-import { ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 
 import { Link } from '@/core/i18n/navigation';
 import { m } from '@/paraglide/messages.js';
+import { DesignStudio } from '@/blocks/design-studio';
 
-const BRAND_LOGOS = [
-  { src: '/imgs/brands/ikea_logo.svg', alt: 'IKEA' },
-  { src: '/imgs/brands/wayfair_logo_hq.webp', alt: 'Wayfair' },
-  { src: '/imgs/brands/amazon_logo.svg', alt: 'Amazon' },
-  { src: '/imgs/brands/potterybarn_logo_sm.webp', alt: 'Pottery Barn' },
-  { src: '/imgs/brands/westelm_logo.svg', alt: 'West Elm' },
-  { src: '/imgs/brands/costco_logo.webp', alt: 'Costco' },
-  { src: '/imgs/brands/walmart_logo.svg', alt: 'Walmart' },
-  { src: '/imgs/brands/roomstogo_logo.webp', alt: 'Rooms To Go' },
-  { src: '/imgs/brands/ashley_logo.svg', alt: 'Ashley' },
-];
+/** Real before/after pairs and results — all generated from single photos. */
+const FEATURED_RESULT = {
+  before: '/imgs/demo/before-empty.avif',
+  after: '/imgs/demo/livingRoom-modern.avif',
+};
+
+const RESULT_THUMBS = [
+  { src: '/imgs/demo/bedroom-scandinavian.avif', width: 1376, height: 768 },
+  {
+    src: '/imgs/generated/work-kitchen-scandinavian.png',
+    width: 886,
+    height: 665,
+  },
+  { src: '/imgs/demo/diningRoom-minimalist.avif', width: 1376, height: 768 },
+] as const;
 
 /**
- * Apple-style hero — centered headline, pill CTA, full-width product video.
+ * Apple-style hero — headline, studio in the first screen, then the
+ * product video and a strip of real before/after results.
  */
 export function Hero() {
   return (
@@ -34,7 +40,7 @@ export function Hero() {
 
         <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
-            href="/room-design"
+            href="/#design-studio"
             className="bg-primary rounded-full px-8 py-3 text-lg font-medium text-white shadow-lg transition-all hover:bg-[#0077ed] hover:shadow-xl"
           >
             {m['landing.hero.cta']()}
@@ -53,6 +59,9 @@ export function Hero() {
         </p>
       </div>
 
+      {/* The studio itself — upload and design without leaving the page */}
+      <DesignStudio />
+
       {/* Product video */}
       <div className="mx-auto mt-14 max-w-5xl px-0 sm:px-6">
         <div className="overflow-hidden rounded-none shadow-2xl sm:rounded-[28px]">
@@ -63,26 +72,64 @@ export function Hero() {
             muted
             loop
             playsInline
+            preload="none"
             className="aspect-video w-full object-cover"
           />
         </div>
       </div>
 
-      {/* Brand strip */}
+      {/* Real results strip — replaces the third-party brand logos */}
       <div className="mx-auto mt-16 max-w-6xl">
         <p className="text-muted-foreground mb-6 text-center text-xs tracking-wide uppercase">
-          {m['landing.hero.brands']()}
+          {m['landing.hero.results_label']()}
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-          {BRAND_LOGOS.map((b) => (
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+          <Link
+            href="/#gallery"
+            className="group flex items-center gap-2"
+            aria-label={m['landing.hero.results_label']()}
+          >
             <img
-              key={b.alt}
-              src={b.src}
-              alt={b.alt}
-              className="h-6 max-w-24 object-contain opacity-60 grayscale transition-opacity hover:opacity-100 sm:h-7"
+              src={FEATURED_RESULT.before}
+              alt={m['landing.gallery.before']()}
+              width={1376}
+              height={768}
+              loading="lazy"
+              decoding="async"
+              className="h-20 w-32 rounded-xl object-cover grayscale transition-transform duration-500 group-hover:scale-[1.03] sm:h-24 sm:w-40"
             />
+            <ArrowRight className="text-muted-foreground size-4 shrink-0" />
+            <img
+              src={FEATURED_RESULT.after}
+              alt={m['landing.gallery.after']()}
+              width={1376}
+              height={768}
+              loading="lazy"
+              decoding="async"
+              className="h-20 w-32 rounded-xl object-cover shadow-md transition-transform duration-500 group-hover:scale-[1.03] sm:h-24 sm:w-40"
+            />
+          </Link>
+          {RESULT_THUMBS.map((t) => (
+            <Link
+              key={t.src}
+              href="/#gallery"
+              aria-label={m['landing.hero.results_label']()}
+            >
+              <img
+                src={t.src}
+                alt={m['landing.gallery.after']()}
+                width={t.width}
+                height={t.height}
+                loading="lazy"
+                decoding="async"
+                className="h-20 w-32 rounded-xl object-cover shadow-md transition-transform duration-500 hover:scale-[1.03] sm:h-24 sm:w-40"
+              />
+            </Link>
           ))}
         </div>
+        <p className="text-muted-foreground mt-6 text-center text-sm">
+          {m['landing.hero.results_hint']()}
+        </p>
       </div>
     </section>
   );

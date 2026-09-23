@@ -7,6 +7,12 @@ import {
 } from '@/config/design-pricing';
 import { consume, grant, revoke } from '@/modules/credits/service';
 import {
+  clientDayKey,
+  FREE_DAILY_LIMIT,
+  freeDesignsUsedToday,
+  recordFreeDesign,
+} from '@/modules/design/free-tier';
+import {
   generateDesign,
   isAIConfigured,
   isEvoLinkConfigured,
@@ -17,6 +23,9 @@ import {
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
 
+/** Marker the studio matches to switch to its sign-up prompt. */
+const FREE_LIMIT_ERROR = 'Daily free design limit reached';
+
 // Client downscales to ≤1536px JPEG (~under 2MB base64); cap generously at 12MB.
 const MAX_IMAGE_CHARS = 12_000_000;
 
@@ -25,7 +34,11 @@ async function GET({ request }: { request: Request }) {
   try {
     const aiConfigured = await isAIConfigured();
     const requiresAuth = await isEvoLinkConfigured();
-    return respData({ aiConfigured, requiresAuth });
+    return respData({
+      aiConfigured,
+      requiresAuth,
+      freeDailyLimit: FREE_DAILY_LIMIT,
+    });
   } catch (e: any) {
     console.error('get design status failed:', e);
     return respErr(e?.message || 'get design status failed');
@@ -102,9 +115,34 @@ async function POST({ request }: { request: Request }) {
     if (await isEvoLinkConfigured()) {
       const auth = getAuth();
       const session = await auth.api.getSession({ headers: request.headers });
+
+      // Anonymous free tier: one watermarked design per visitor per day.
+      // The quota row is recorded after a successful generation, so a failed
+      // run never burns the free attempt; the unique (ip_hash, day) index
+      // still hard-caps repeat visitors.
       if (!session?.user) {
-        return respErr('Sign in to generate a room design');
+        const dayKey = clientDayKey(request);
+        const used = await freeDesignsUsedToday(dayKey);
+        if (used >= FREE_DAILY_LIMIT) {
+          return respErr(
+            `${FREE_LIMIT_ERROR}. Sign up to keep designing — credits start at $5.`
+          );
+        }
+        const freeResult = await generateDesign({
+          image,
+          roomType,
+          style,
+          instructions,
+        });
+        try {
+          await recordFreeDesign(dayKey);
+        } catch (recordError) {
+          console.warn('record free design usage failed:', recordError);
+        }
+        const { upstreamCredits: _freeUpstream, ...freePublic } = freeResult;
+        return respData({ ...freePublic, free: true });
       }
+
       user = { id: session.user.id, email: session.user.email };
 
       const reservation = await consume({

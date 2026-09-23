@@ -3,16 +3,22 @@ import { m } from '@/paraglide/messages.js';
 const STEPS = [
   {
     img: '/imgs/steps/step1.webp',
+    width: 1024,
+    height: 683,
     title: m['landing.how.step1.title'],
     desc: m['landing.how.step1.desc'],
   },
   {
     img: '/imgs/steps/step2.webp',
+    width: 860,
+    height: 577,
     title: m['landing.how.step2.title'],
     desc: m['landing.how.step2.desc'],
   },
   {
     img: '/imgs/steps/step3.webp',
+    width: 860,
+    height: 462,
     title: m['landing.how.step3.title'],
     desc: m['landing.how.step3.desc'],
   },
@@ -41,6 +47,10 @@ export function HowItWorks() {
                 <img
                   src={step.img}
                   alt={step.title()}
+                  width={step.width}
+                  height={step.height}
+                  loading="lazy"
+                  decoding="async"
                   className="aspect-[4/3] w-full object-cover"
                 />
               </div>

@@ -16,6 +16,8 @@ import {
 import { toast } from 'sonner';
 
 import { useSession } from '@/core/auth/client';
+import { Link } from '@/core/i18n/navigation';
+import { envConfigs } from '@/config';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
 
@@ -44,10 +46,10 @@ const STYLES = [
 ] as const;
 
 type RoomType = (typeof ROOM_TYPES)[number];
-type Style = (typeof STYLES)[number];
+export type Style = (typeof STYLES)[number];
 
-/** Thumbnail shown on each style card in the picker. */
-const STYLE_THUMBS: Record<Style, string> = {
+/** Thumbnail shown on each style card in the picker (and the style guide). */
+export const STYLE_THUMBS: Record<Style, string> = {
   modern: '/imgs/demo/livingRoom-modern.avif',
   minimalist: '/imgs/demo/livingRoom-minimalist.avif',
   scandinavian: '/imgs/demo/livingRoom-scandinavian.avif',
@@ -62,6 +64,8 @@ interface DesignResult {
   imageUrl: string;
   demo: boolean;
   provider: string;
+  /** Anonymous free-tier result — watermarked preview, no download. */
+  free?: boolean;
   id?: string;
   roomType?: RoomType;
   style?: Style;
@@ -133,18 +137,36 @@ function Chip({
 /**
  * Room design studio — upload a photo, pick room type + style, generate.
  * Apple-style layout: image canvas on the left, controls on the right.
+ *
+ * `initialRoom` preselects a room type (used by `?room=` links from the room
+ * landing pages) and scrolls the studio into view.
  */
-export function DesignStudio() {
+export function DesignStudio({ initialRoom }: { initialRoom?: string }) {
   const { data: session } = useSession();
   const [imageData, setImageData] = useState<string | null>(null);
-  const [roomType, setRoomType] = useState<RoomType>('living');
+  const [roomType, setRoomType] = useState<RoomType>(
+    (ROOM_TYPES as readonly string[]).includes(initialRoom ?? '')
+      ? (initialRoom as RoomType)
+      : 'living'
+  );
   const [style, setStyle] = useState<Style>('modern');
   const [instructions, setInstructions] = useState('');
   const [view, setView] = useState<'result' | 'original'>('result');
   const [history, setHistory] = useState<DesignResult[]>([]);
   const [active, setActive] = useState<DesignResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [freeLimitHit, setFreeLimitHit] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Deep link (?room=bathroom) or a showcase tap — land on the studio preloaded.
+  useEffect(() => {
+    if (
+      initialRoom &&
+      (ROOM_TYPES as readonly string[]).includes(initialRoom)
+    ) {
+      setRoomType(initialRoom as RoomType);
+    }
+  }, [initialRoom]);
 
   // A showcase work was tapped — load its room + style and scroll into view.
   useEffect(() => {
@@ -229,11 +251,21 @@ export function DesignStudio() {
         ...result,
         imageUrl: normalizeImageUrl(result.imageUrl),
       };
-      setHistory((prev) => [normalizedResult, ...prev].slice(0, 30));
+      // Free-tier results are one-off previews — keep them out of history.
+      if (!normalizedResult.free) {
+        setHistory((prev) => [normalizedResult, ...prev].slice(0, 30));
+      }
       setActive(normalizedResult);
       setView('result');
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      if (e.message.includes('Daily free design limit reached')) {
+        setFreeLimitHit(true);
+        toast.error(m['create.studio.free_limit']());
+        return;
+      }
+      toast.error(e.message);
+    },
   });
 
   const generating = mutation.isPending;
@@ -241,10 +273,6 @@ export function DesignStudio() {
   const generate = () => {
     if (!imageData) {
       toast.error(m['create.studio.need_photo']());
-      return;
-    }
-    if (requiresAuth && !session?.user) {
-      toast.error(m['create.studio.sign_in_required']());
       return;
     }
     mutation.mutate({ image: imageData, roomType, style, instructions });
@@ -305,6 +333,23 @@ export function DesignStudio() {
                     }
                     className="h-full w-full object-cover"
                   />
+                  {active?.free && view === 'result' && (
+                    <div
+                      className="pointer-events-none absolute inset-0 overflow-hidden"
+                      aria-hidden="true"
+                    >
+                      <div className="absolute -inset-8 flex rotate-[-18deg] flex-wrap content-center justify-center gap-x-12 gap-y-8">
+                        {Array.from({ length: 15 }).map((_, i) => (
+                          <span
+                            key={i}
+                            className="text-sm font-semibold tracking-[0.2em] text-white/35 uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
+                          >
+                            {envConfigs.app_name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {generating && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-neutral-900/60 backdrop-blur-sm">
                       <Loader2 className="size-8 animate-spin text-white" />
@@ -354,18 +399,28 @@ export function DesignStudio() {
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 {active && !generating && (
                   <>
-                    <a
-                      href={
-                        active.id
-                          ? `/api/design-history?download=${encodeURIComponent(active.id)}`
-                          : active.imageUrl
-                      }
-                      download="redocor-design"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-medium transition-colors hover:border-neutral-400"
-                    >
-                      <Download className="size-4" />
-                      {m['create.studio.download']()}
-                    </a>
+                    {active.free ? (
+                      <Link
+                        href="/sign-up"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#0071e3] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0077ed]"
+                      >
+                        <Download className="size-4" />
+                        {m['create.studio.free_download_cta']()}
+                      </Link>
+                    ) : (
+                      <a
+                        href={
+                          active.id
+                            ? `/api/design-history?download=${encodeURIComponent(active.id)}`
+                            : active.imageUrl
+                        }
+                        download="redocor-design"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-medium transition-colors hover:border-neutral-400"
+                      >
+                        <Download className="size-4" />
+                        {m['create.studio.download']()}
+                      </a>
+                    )}
                     {imageData && (
                       <button
                         type="button"
@@ -474,7 +529,10 @@ export function DesignStudio() {
                           alt={m[
                             `create.style.${s}` as 'create.style.modern'
                           ]()}
+                          width={STYLE_THUMBS[s].endsWith('.avif') ? 1376 : 800}
+                          height={STYLE_THUMBS[s].endsWith('.avif') ? 768 : 600}
                           loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                         {selected && (
@@ -541,11 +599,28 @@ export function DesignStudio() {
                   ? m['create.studio.generating']()
                   : m['create.studio.generate']()}
               </button>
-              <p className="text-muted-foreground text-center text-xs">
-                {aiConfigured
-                  ? m['create.studio.free_hint']()
-                  : m['create.studio.demo_note']()}
-              </p>
+              {!aiConfigured ? (
+                <p className="text-muted-foreground text-center text-xs">
+                  {m['create.studio.demo_note']()}
+                </p>
+              ) : requiresAuth && !session?.user ? (
+                freeLimitHit ? (
+                  <Link
+                    href="/sign-up"
+                    className="text-center text-xs font-medium text-[#0071e3] underline underline-offset-2"
+                  >
+                    {m['create.studio.free_limit_hint']()}
+                  </Link>
+                ) : (
+                  <p className="text-muted-foreground text-center text-xs">
+                    {m['create.studio.free_anonymous_hint']()}
+                  </p>
+                )
+              ) : (
+                <p className="text-muted-foreground text-center text-xs">
+                  {m['create.studio.free_hint']()}
+                </p>
+              )}
             </div>
           </div>
         </div>

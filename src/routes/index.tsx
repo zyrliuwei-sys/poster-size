@@ -1,9 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
+import { socialMeta } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 import { Audiences } from '@/blocks/audiences';
+import { ChangesKeeps } from '@/blocks/changes-keeps';
 import { Compare } from '@/blocks/compare';
 import { CTA } from '@/blocks/cta';
 import { FAQ, FAQ_KEYS } from '@/blocks/faq';
@@ -16,7 +18,7 @@ import { Header } from '@/blocks/header';
 import { Hero } from '@/blocks/hero';
 import { HowItWorks } from '@/blocks/how-it-works';
 import { Rooms } from '@/blocks/rooms';
-import { Stats } from '@/blocks/stats';
+import { StyleGuide } from '@/blocks/style-guide';
 import { SupportWidget } from '@/blocks/support-widget';
 
 function HomePage() {
@@ -27,8 +29,9 @@ function HomePage() {
         <Hero />
         <HowItWorks />
         <Features />
-        <Stats />
+        <ChangesKeeps />
         <Gallery />
+        <StyleGuide />
         <Floorplan />
         <FreeTier />
         <Compare />
@@ -98,17 +101,17 @@ export const Route = createFileRoute('/')({
     const locale = loaderData?.locale ?? 'en';
     const urlFor = (loc: string) =>
       localizeUrl(`${envConfigs.app_url}/`, { locale: loc as any }).href;
+    const title = m['common.metadata.title']({}, { locale: locale as any });
+    const description = m['common.metadata.description'](
+      {},
+      { locale: locale as any }
+    );
     return {
       meta: [
-        { title: m['common.metadata.title']({}, { locale: locale as any }) },
-        {
-          name: 'description',
-          content: m['common.metadata.description'](
-            {},
-            { locale: locale as any }
-          ),
-        },
+        { title },
+        { name: 'description', content: description },
         { name: 'robots', content: 'index,follow' },
+        ...socialMeta({ title, description, url: urlFor(locale), locale }),
       ],
       links: [
         { rel: 'canonical', href: urlFor(locale) },

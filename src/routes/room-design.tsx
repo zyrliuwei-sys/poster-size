@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
+import { socialMeta } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 import { CreateHero, DesignStudio, DesignTips } from '@/blocks/design-studio';
@@ -10,12 +11,13 @@ import { Showcase } from '@/blocks/showcase';
 import { SupportWidget } from '@/blocks/support-widget';
 
 function RoomDesignPage() {
+  const { room } = Route.useSearch();
   return (
     <div className="bg-background text-foreground flex min-h-screen flex-col">
       <Header />
       <main>
         <CreateHero />
-        <DesignStudio />
+        <DesignStudio initialRoom={room} />
         <Showcase />
         <DesignTips />
       </main>
@@ -26,6 +28,10 @@ function RoomDesignPage() {
 }
 
 export const Route = createFileRoute('/room-design')({
+  // /room-design?room=bathroom — spoke pages preload the room picker.
+  validateSearch: (search: Record<string, unknown>) => ({
+    room: typeof search.room === 'string' ? search.room : undefined,
+  }),
   loader: () => ({ locale: getLocale() }),
   head: ({ loaderData }) => {
     const locale = loaderData?.locale ?? 'en';
@@ -33,19 +39,17 @@ export const Route = createFileRoute('/room-design')({
       localizeUrl(`${envConfigs.app_url}/room-design`, {
         locale: loc as any,
       }).href;
+    const title = m['create.metadata.title']({}, { locale: locale as any });
+    const description = m['create.metadata.description'](
+      {},
+      { locale: locale as any }
+    );
     return {
       meta: [
-        {
-          title: m['create.metadata.title']({}, { locale: locale as any }),
-        },
-        {
-          name: 'description',
-          content: m['create.metadata.description'](
-            {},
-            { locale: locale as any }
-          ),
-        },
+        { title },
+        { name: 'description', content: description },
         { name: 'robots', content: 'index,follow' },
+        ...socialMeta({ title, description, url: urlFor(locale), locale }),
       ],
       links: [
         { rel: 'canonical', href: urlFor(locale) },

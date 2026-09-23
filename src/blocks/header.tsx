@@ -36,6 +36,8 @@ export function Header() {
           <img
             src={envConfigs.app_logo}
             alt={envConfigs.app_name}
+            width={24}
+            height={24}
             className="size-6 rounded-md"
           />
           <span className="text-sm font-semibold tracking-tight text-white">
@@ -68,10 +70,10 @@ export function Header() {
             />
           ) : (
             <Link
-              href="/room-design"
+              href="/sign-in"
               className="rounded-full bg-[#0071e3] px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#0077ed]"
             >
-              {m['landing.nav.cta']()}
+              {m['common.nav.sign_in']()}
             </Link>
           )}
         </div>
@@ -114,11 +116,11 @@ export function Header() {
               />
             ) : (
               <Link
-                href="/room-design"
+                href="/sign-in"
                 className="rounded-full bg-[#0071e3] px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#0077ed]"
                 onClick={() => setMobileOpen(false)}
               >
-                {m['landing.nav.cta']()}
+                {m['common.nav.sign_in']()}
               </Link>
             )}
           </div>

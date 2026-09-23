@@ -5,9 +5,87 @@ import { baseLocale } from '@/paraglide/runtime.js';
 import { getLocalPosts, mergePosts } from '@/content/posts';
 
 const STATIC_PAGES: { path: string; title: string; description: string }[] = [
-  { path: '', title: 'Home', description: 'Landing page' },
-  { path: '/pricing', title: 'Pricing', description: 'Pricing plans' },
-  { path: '/blog', title: 'Blog', description: 'Blog posts and articles' },
+  {
+    path: '',
+    title: 'Home',
+    description: 'AI room design from a single photo — styles, gallery, FAQ',
+  },
+  {
+    path: '/room-design',
+    title: 'Room Design Studio',
+    description: 'Upload a photo and generate a redesign',
+  },
+  {
+    path: '/ai-room-design-free',
+    title: 'Free AI Room Design',
+    description: 'One free watermarked design per day, no sign-up',
+  },
+  {
+    path: '/ai-living-room-design',
+    title: 'AI Living Room Design',
+    description: 'Restyle a living room from one photo',
+  },
+  {
+    path: '/ai-bedroom-design',
+    title: 'AI Bedroom Design',
+    description: 'Restyle a bedroom from one photo',
+  },
+  {
+    path: '/ai-kitchen-design',
+    title: 'AI Kitchen Design',
+    description: 'Cabinet and countertop looks from one photo',
+  },
+  {
+    path: '/ai-bathroom-design',
+    title: 'AI Bathroom Design',
+    description: 'Tile, vanity and lighting ideas from one photo',
+  },
+  {
+    path: '/ai-dining-room-design',
+    title: 'AI Dining Room Design',
+    description: 'Restyle a dining room from one photo',
+  },
+  {
+    path: '/ai-home-office-design',
+    title: 'AI Home Office Design',
+    description: 'Desk layout and storage ideas from one photo',
+  },
+  {
+    path: '/ai-basement-design',
+    title: 'AI Basement Design',
+    description: 'Visualize a finished basement from one photo',
+  },
+  {
+    path: '/ai-attic-design',
+    title: 'AI Attic Design',
+    description: 'Design around sloped ceilings from one photo',
+  },
+  {
+    path: '/ai-study-room-design',
+    title: 'AI Study Room Design',
+    description: 'Shelving and desk ideas from one photo',
+  },
+  {
+    path: '/ai-room-planner',
+    title: 'AI Room Planner',
+    description: 'Plan furniture layouts from a photo or floor plan',
+  },
+  {
+    path: '/ai-room-makeover',
+    title: 'AI Room Makeover',
+    description: 'Before-and-after redesigns from one photo',
+  },
+  {
+    path: '/ai-room-organizer',
+    title: 'AI Room Organizer',
+    description: 'Declutter and add storage from one photo',
+  },
+  {
+    path: '/pricing',
+    title: 'Pricing',
+    description: 'Credit packs and packages',
+  },
+  { path: '/blog', title: 'Blog', description: 'Room design ideas and guides' },
 ];
 
 export const Route = createFileRoute('/llms-full.txt')({

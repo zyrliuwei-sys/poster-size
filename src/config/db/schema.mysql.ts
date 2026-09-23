@@ -14,6 +14,7 @@ import {
   mysqlTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/mysql-core';
 
@@ -561,3 +562,18 @@ export type NewTicketMessage = typeof ticketMessage.$inferInsert;
 
 // ─── Custom tables ───────────────────────────────────────────────────────────
 // Add your own tables below this line.
+
+// One row per anonymous free generation — powers the daily 1-free-design cap.
+export const freeDesignUsage = mysqlTable(
+  'free_design_usage',
+  {
+    id: varchar191('id').primaryKey(),
+    ipHash: varchar191('ip_hash').notNull(),
+    day: varchar191('day').notNull(), // UTC YYYY-MM-DD
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('uq_free_design_usage_ip_day').on(t.ipHash, t.day)]
+);
+
+export type FreeDesignUsage = typeof freeDesignUsage.$inferSelect;
+export type NewFreeDesignUsage = typeof freeDesignUsage.$inferInsert;

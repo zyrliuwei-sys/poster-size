@@ -6,7 +6,13 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 
 const table = sqliteTable;
 
@@ -697,3 +703,20 @@ export type InviteCode = typeof inviteCode.$inferSelect;
 export type NewInviteCode = typeof inviteCode.$inferInsert;
 export type UserInvite = typeof userInvite.$inferSelect;
 export type NewUserInvite = typeof userInvite.$inferInsert;
+
+// One row per anonymous free generation — powers the daily 1-free-design cap.
+export const freeDesignUsage = table(
+  'free_design_usage',
+  {
+    id: text('id').primaryKey(),
+    ipHash: text('ip_hash').notNull(),
+    day: text('day').notNull(), // UTC YYYY-MM-DD
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (t) => [uniqueIndex('uq_free_design_usage_ip_day').on(t.ipHash, t.day)]
+);
+
+export type FreeDesignUsage = typeof freeDesignUsage.$inferSelect;
+export type NewFreeDesignUsage = typeof freeDesignUsage.$inferInsert;

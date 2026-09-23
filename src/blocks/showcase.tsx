@@ -27,6 +27,12 @@ interface Work {
   featured?: boolean;
 }
 
+/** Intrinsic sizes — demo AVIFs are 1376×768, generated PNGs 886×665. */
+const dimsFor = (src: string) =>
+  src.endsWith('.avif')
+    ? { width: 1376, height: 768 }
+    : { width: 886, height: 665 };
+
 const WORKS: Work[] = [
   {
     src: '/imgs/demo/livingRoom-modern.avif',
@@ -128,6 +134,7 @@ export function Showcase() {
               <img
                 src={work.src}
                 alt={`${m[`create.room.${work.room}` as 'create.room.living']()} · ${m[`create.style.${work.style}` as 'create.style.modern']()}`}
+                {...dimsFor(work.src)}
                 loading={index < 2 ? 'eager' : 'lazy'}
                 decoding="async"
                 className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:group-hover:scale-[1.045] motion-reduce:transition-none"

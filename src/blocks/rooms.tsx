@@ -1,26 +1,28 @@
+import { Link } from '@/core/i18n/navigation';
 import { m } from '@/paraglide/messages.js';
 
+/** Room spokes — each pill links to its dedicated landing page. */
 const ROOMS = [
-  { key: 'bathroom', hasDesc: true },
-  { key: 'bedroom' },
-  { key: 'living' },
-  { key: 'kitchen' },
-  { key: 'dining' },
-  { key: 'office' },
-  { key: 'basement' },
-  { key: 'attic' },
-  { key: 'study' },
+  { key: 'bathroom', href: '/ai-bathroom-design', hasDesc: true },
+  { key: 'bedroom', href: '/ai-bedroom-design' },
+  { key: 'living', href: '/ai-living-room-design' },
+  { key: 'kitchen', href: '/ai-kitchen-design' },
+  { key: 'dining', href: '/ai-dining-room-design' },
+  { key: 'office', href: '/ai-home-office-design' },
+  { key: 'basement', href: '/ai-basement-design' },
+  { key: 'attic', href: '/ai-attic-design' },
+  { key: 'study', href: '/ai-study-room-design' },
 ] as const;
 
 const TOOLS = [
-  m['landing.rooms.planner'],
-  m['landing.rooms.makeover'],
-  m['landing.rooms.organizer'],
+  { key: 'planner', href: '/ai-room-planner' },
+  { key: 'makeover', href: '/ai-room-makeover' },
+  { key: 'organizer', href: '/ai-room-organizer' },
 ] as const;
 
 /**
- * Room types and styles — plain-text walkthrough list.
- * (Spoke pages like /ai-bathroom-design can be added later; links land here.)
+ * Room types and styles — every item links to its spoke page, passing
+ * homepage authority down to the long-tail room keywords.
  */
 export function Rooms() {
   return (
@@ -36,26 +38,33 @@ export function Rooms() {
         </div>
 
         <ul className="flex flex-wrap justify-center gap-3">
-          {ROOMS.map(({ key, hasDesc }) => (
-            <li
-              key={key}
-              className="rounded-full bg-[#f5f5f7] px-5 py-2.5 text-base font-medium"
-            >
-              {m[`landing.rooms.${key}` as 'landing.rooms.bedroom']()}
-              {hasDesc && (
-                <span className="text-muted-foreground font-normal">
-                  {' '}
-                  — {m['landing.rooms.bathroom_desc']()}
-                </span>
-              )}
+          {ROOMS.map(({ key, href, hasDesc }) => (
+            <li key={key}>
+              <Link
+                href={href}
+                className="rounded-full bg-[#f5f5f7] px-5 py-2.5 text-base font-medium transition-colors hover:bg-neutral-200"
+              >
+                {m[`landing.rooms.${key}` as 'landing.rooms.bedroom']()}
+                {hasDesc && (
+                  <span className="text-muted-foreground font-normal">
+                    {' '}
+                    — {m['landing.rooms.bathroom_desc']()}
+                  </span>
+                )}
+              </Link>
             </li>
           ))}
         </ul>
 
-        <ul className="mx-auto mt-6 max-w-3xl space-y-2 text-center">
-          {TOOLS.map((tool) => (
-            <li key={tool} className="text-muted-foreground text-lg">
-              {tool()}
+        <ul className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-x-6 gap-y-2 text-center">
+          {TOOLS.map(({ key, href }) => (
+            <li key={key}>
+              <Link
+                href={href}
+                className="text-muted-foreground hover:text-foreground text-lg transition-colors hover:underline"
+              >
+                {m[`landing.rooms.${key}` as 'landing.rooms.planner']()}
+              </Link>
             </li>
           ))}
         </ul>

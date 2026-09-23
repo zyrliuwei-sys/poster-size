@@ -80,12 +80,20 @@ function BeforeAfterSlider({
       <img
         src={after}
         alt={m['landing.gallery.after']()}
+        width={1376}
+        height={768}
+        loading="lazy"
+        decoding="async"
         className="absolute inset-0 h-full w-full object-cover"
         draggable={false}
       />
       <img
         src={before}
         alt={m['landing.gallery.before']()}
+        width={1376}
+        height={768}
+        loading="lazy"
+        decoding="async"
         className="absolute inset-0 h-full w-full object-cover"
         style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
         draggable={false}
@@ -144,6 +152,10 @@ export function Gallery() {
               <img
                 src={item.src}
                 alt=""
+                width={1376}
+                height={768}
+                loading="lazy"
+                decoding="async"
                 className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <figcaption className="absolute bottom-3 left-3 rounded-full bg-black/50 px-3 py-1 text-xs font-medium text-white backdrop-blur-md">

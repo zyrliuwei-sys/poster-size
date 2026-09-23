@@ -13,11 +13,14 @@ declare global {
 }
 
 function getClientIpFromRequest(request: Request): string {
+  // Platform-set headers win. XFF is append-only through proxies, so its LAST
+  // entry is the edge-observed client IP — the first entry is spoofable.
   const xff = request.headers.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0]?.trim() || '';
+  const lastXff = xff ? xff.split(',').pop()?.trim() : '';
   return (
-    request.headers.get('cf-connecting-ip') ||
-    request.headers.get('x-real-ip') ||
+    request.headers.get('cf-connecting-ip')?.trim() ||
+    lastXff ||
+    request.headers.get('x-real-ip')?.trim() ||
     ''
   );
 }

@@ -4,10 +4,10 @@ import { m } from '@/paraglide/messages.js';
 
 const BULLETS = [
   m['landing.free.b1'],
-  m['landing.free.b2'],
   m['landing.free.b3'],
   m['landing.free.b4'],
   m['landing.free.b5'],
+  m['landing.free.b6'],
 ] as const;
 
 /**

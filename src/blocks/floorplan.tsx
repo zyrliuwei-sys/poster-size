@@ -34,6 +34,10 @@ export function Floorplan() {
             <img
               src="/imgs/floorplan/start.jpg"
               alt="Floorplan"
+              width={3704}
+              height={1976}
+              loading="lazy"
+              decoding="async"
               className="aspect-[3/4] w-full object-cover"
             />
           </div>
@@ -41,6 +45,10 @@ export function Floorplan() {
             <img
               src="/imgs/floorplan/after.jpg"
               alt="3D visualization"
+              width={1024}
+              height={585}
+              loading="lazy"
+              decoding="async"
               className="aspect-[3/4] w-full object-cover"
             />
           </div>
