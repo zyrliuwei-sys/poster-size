@@ -259,10 +259,16 @@ export async function verifyIndexNowKey(origin: string) {
     headers: { 'Cache-Control': 'no-cache' },
   });
   const value = (await response.text()).trim();
-  if (!response.ok || value !== stored.apiKey) {
+  if (!response.ok) {
     return {
       ok: false,
-      message: `The key file could not be verified at ${keyLocation}`,
+      message: `The key file returned HTTP ${response.status} at ${keyLocation}`,
+    };
+  }
+  if (value !== stored.apiKey) {
+    return {
+      ok: false,
+      message: `The key file content does not match the configured API key at ${keyLocation}`,
     };
   }
 
