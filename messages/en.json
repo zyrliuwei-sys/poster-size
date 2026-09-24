@@ -406,6 +406,7 @@
   "admin.indexnow.submitting": "Submitting...",
   "admin.indexnow.submitted": "Submitted {count} URLs to IndexNow.",
   "admin.indexnow.last_submitted": "Last submission: {count} URLs at {time}",
+  "admin.indexnow.rate_limited": "Bing has temporarily limited requests from this server (429). Wait before submitting again.",
   "admin.indexnow.how_title": "How it works",
   "admin.indexnow.step_generate": "Generate or paste an IndexNow API key.",
   "admin.indexnow.step_host": "This app serves the key at the required root URL automatically.",

@@ -251,7 +251,13 @@ export async function verifyIndexNowKey(origin: string) {
   if (!stored.apiKey) throw new Error('IndexNow API key is not configured');
 
   const keyLocation = getIndexNowKeyLocation(origin, stored.apiKey);
-  const response = await fetch(keyLocation, { cache: 'no-store' });
+  const verificationUrl = new URL(keyLocation);
+  // Bypass any proxy/CDN cache that may still hold a 404 from before setup.
+  verificationUrl.searchParams.set('_indexnow_verify', Date.now().toString());
+  const response = await fetch(verificationUrl, {
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache' },
+  });
   const value = (await response.text()).trim();
   if (!response.ok || value !== stored.apiKey) {
     return {

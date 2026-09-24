@@ -406,6 +406,7 @@
   "admin.indexnow.submitting": "提交中……",
   "admin.indexnow.submitted": "已向 IndexNow 提交 {count} 个 URL。",
   "admin.indexnow.last_submitted": "上次提交：{count} 个 URL，时间：{time}",
+  "admin.indexnow.rate_limited": "Bing 暂时限制了此服务器的请求（429）。请等待一段时间后再提交。",
   "admin.indexnow.how_title": "工作方式",
   "admin.indexnow.step_generate": "生成或粘贴 IndexNow API Key。",
   "admin.indexnow.step_host": "系统会自动在站点根目录提供 IndexNow 要求的 Key 文件。",

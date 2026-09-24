@@ -8,6 +8,7 @@ import type {
 } from '@/features/indexnow/types';
 import {
   Check,
+  CircleAlert,
   Copy,
   ExternalLink,
   KeyRound,
@@ -98,8 +99,8 @@ function AdminIndexNowPage() {
   const hasKey = Boolean(settings?.configured || apiKey.trim());
 
   return (
-    <div className="max-w-3xl space-y-6 p-4 md:p-6">
-      <div>
+    <div className="max-w-3xl space-y-4 p-4 md:p-6">
+      <div className="mb-1">
         <h1 className="text-2xl font-semibold tracking-tight">
           {m['admin.indexnow.title']()}
         </h1>
@@ -109,14 +110,14 @@ function AdminIndexNowPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
-            <KeyRound className="size-5" />
+            <KeyRound className="text-muted-foreground size-4" />
             {m['admin.indexnow.install_title']()}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="space-y-2">
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
             <Label htmlFor="indexnow-api-key">
               {m['admin.indexnow.key_label']()}
             </Label>
@@ -144,20 +145,14 @@ function AdminIndexNowPage() {
                 {m['admin.indexnow.generate']()}
               </Button>
             </div>
-            <p className="text-muted-foreground text-xs">
-              {m['admin.indexnow.key_help']()}
-            </p>
           </div>
 
-          <div className="space-y-4 rounded-lg border p-4">
-            <div className="flex items-center justify-between gap-4">
+          <div className="divide-y rounded-lg border px-3">
+            <div className="flex items-center justify-between gap-4 py-3">
               <div>
-                <Label htmlFor="indexnow-enabled">
+                <Label className="text-sm" htmlFor="indexnow-enabled">
                   {m['admin.indexnow.enabled']()}
                 </Label>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {m['admin.indexnow.enabled_help']()}
-                </p>
               </div>
               <Switch
                 id="indexnow-enabled"
@@ -165,12 +160,12 @@ function AdminIndexNowPage() {
                 onCheckedChange={setEnabled}
               />
             </div>
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 py-3">
               <div>
-                <Label htmlFor="indexnow-auto-submit">
+                <Label className="text-sm" htmlFor="indexnow-auto-submit">
                   {m['admin.indexnow.auto_submit']()}
                 </Label>
-                <p className="text-muted-foreground mt-1 text-xs">
+                <p className="text-muted-foreground mt-0.5 text-xs">
                   {m['admin.indexnow.auto_submit_help']()}
                 </p>
               </div>
@@ -195,16 +190,13 @@ function AdminIndexNowPage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="size-5" />
+            <ShieldCheck className="text-muted-foreground size-4" />
             {m['admin.indexnow.verify_title']()}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground text-sm">
-            {m['admin.indexnow.verify_description']()}
-          </p>
+        <CardContent className="space-y-3">
           {settings?.keyLocation && (
             <div className="bg-muted/30 flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center">
               <code className="min-w-0 flex-1 truncate text-xs">
@@ -267,21 +259,18 @@ function AdminIndexNowPage() {
             </p>
           )}
           {settings?.lastError && (
-            <p className="text-destructive text-xs">{settings.lastError}</p>
+            <div
+              role="alert"
+              className="border-destructive/20 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border px-3 py-2.5 text-sm"
+            >
+              <CircleAlert className="mt-0.5 size-4 shrink-0" />
+              <span>
+                {settings.lastError.includes('(429)')
+                  ? m['admin.indexnow.rate_limited']()
+                  : settings.lastError}
+              </span>
+            </div>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{m['admin.indexnow.how_title']()}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="text-muted-foreground list-decimal space-y-2 pl-5 text-sm">
-            <li>{m['admin.indexnow.step_generate']()}</li>
-            <li>{m['admin.indexnow.step_host']()}</li>
-            <li>{m['admin.indexnow.step_submit']()}</li>
-          </ol>
         </CardContent>
       </Card>
     </div>
