@@ -57,6 +57,7 @@ function AdminLayout() {
       group,
       items: [
         { href: '/admin/categories', label: m['admin.nav.categories']() },
+        { href: '/admin/poster-sizes', label: m['admin.nav.poster_sizes']() },
         { href: '/admin/posts', label: m['admin.nav.posts']() },
         { href: '/admin/tickets', label: m['admin.nav.tickets']() },
       ],

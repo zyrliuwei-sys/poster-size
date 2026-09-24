@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import {
+  Bookmark,
   Coins,
   CreditCard,
   Home,
@@ -50,6 +51,12 @@ function SettingsLayout() {
       href: '/settings/apikeys',
       label: m['settings.nav.apikeys'](),
       icon: Key,
+      group,
+    },
+    {
+      href: '/settings/favorites',
+      label: m['settings.nav.favorites'](),
+      icon: Bookmark,
       group,
     },
     {

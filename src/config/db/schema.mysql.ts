@@ -563,6 +563,55 @@ export type NewTicketMessage = typeof ticketMessage.$inferInsert;
 // ─── Custom tables ───────────────────────────────────────────────────────────
 // Add your own tables below this line.
 
+// ─── Poster Size catalogue ───────────────────────────────────────────────────
+
+export const posterSize = table(
+  'poster_size',
+  {
+    id: varchar191('id').primaryKey(),
+    slug: varchar191('slug').notNull().unique(),
+    name: varchar191('name').notNull(),
+    category: varchar191('category').notNull(),
+    region: varchar191('region').notNull(),
+    width: int('width').notNull(),
+    height: int('height').notNull(),
+    unit: varchar191('unit').notNull(),
+    aspectRatio: varchar191('aspect_ratio').notNull(),
+    description: text('description').notNull(),
+    sortOrder: int('sort_order').notNull().default(0),
+    status: varchar191('status').notNull().default('published'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => [
+    index('idx_poster_size_category').on(t.category),
+    index('idx_poster_size_status').on(t.status),
+  ]
+);
+
+export const posterFavorite = table(
+  'poster_favorite',
+  {
+    id: varchar191('id').primaryKey(),
+    userId: varchar191('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    posterSizeId: varchar191('poster_size_id')
+      .notNull()
+      .references(() => posterSize.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('uq_poster_favorite_user_size').on(t.userId, t.posterSizeId),
+    index('idx_poster_favorite_user').on(t.userId),
+  ]
+);
+
+export type PosterSize = typeof posterSize.$inferSelect;
+export type NewPosterSize = typeof posterSize.$inferInsert;
+export type PosterFavorite = typeof posterFavorite.$inferSelect;
+export type NewPosterFavorite = typeof posterFavorite.$inferInsert;
+
 // One row per account — records that the sign-up gift design was used.
 export const freeDesignUsage = mysqlTable(
   'free_design_usage',

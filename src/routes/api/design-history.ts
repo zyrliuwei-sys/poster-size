@@ -50,7 +50,7 @@ async function GET({ request }: { request: Request }) {
     return new Response(imageResponse.body, {
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="redocor-design-${item.id}.jpg"`,
+        'Content-Disposition': `attachment; filename="poster-size-design-${item.id}.jpg"`,
         'Cache-Control': 'private, max-age=3600',
       },
     });

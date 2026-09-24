@@ -1,0 +1,15 @@
+{
+  "date": "2026-09-24",
+  "framework": "TanStack Start + React 19 + TypeScript",
+  "fontStack": "@fontsource-variable/inter plus system Apple stack",
+  "palette": "oklch tokens in src/styles/globals.css with existing Apple-inspired white/ink/blue palette",
+  "motion": "motion package installed; use restrained CSS transitions and reduced-motion fallback",
+  "spacing": "Tailwind 4 utilities with 4px-oriented spacing",
+  "preserve": [
+    "auth routes",
+    "admin shell",
+    "settings shell",
+    "Paraglide i18n",
+    "typed api-client"
+  ]
+}

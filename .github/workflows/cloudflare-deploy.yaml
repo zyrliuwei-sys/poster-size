@@ -28,7 +28,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: d7c3d8fa2229ed65b03fd28fc8659989
       DATABASE_PROVIDER: postgresql # postinstall copies the postgres schema template
       VITE_APP_URL: https://redocor.com
-      VITE_APP_NAME: Redocor AI
+      VITE_APP_NAME: Poster Size
       HUSKY: '0' # skip git hooks in CI
     steps:
       - uses: actions/checkout@v4

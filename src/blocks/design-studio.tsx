@@ -408,7 +408,7 @@ export function DesignStudio({ initialRoom }: { initialRoom?: string }) {
                             ? `/api/design-history?download=${encodeURIComponent(active.id)}`
                             : active.imageUrl
                         }
-                        download="redocor-design"
+                        download="poster-size-design"
                         className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-medium transition-colors hover:border-neutral-400"
                       >
                         <Download className="size-4" />

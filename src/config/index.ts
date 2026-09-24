@@ -16,9 +16,11 @@ const publicEnv = (key: string) => metaEnv[key] ?? procEnv[key];
 export const envConfigs: Record<string, string> = {
   // App (public)
   app_url: publicEnv('VITE_APP_URL') ?? 'http://localhost:3000',
-  app_name: publicEnv('VITE_APP_NAME') ?? 'ShipAny',
-  app_description: publicEnv('VITE_APP_DESCRIPTION') ?? 'Ship your SaaS faster',
-  app_logo: publicEnv('VITE_APP_LOGO') ?? '/logo.svg',
+  app_name: publicEnv('VITE_APP_NAME') ?? 'postersize ai',
+  app_description:
+    publicEnv('VITE_APP_DESCRIPTION') ??
+    'Find the right poster size for print, social media, presentations, and large-format work with a clear poster size guide and searchable format reference.',
+  app_logo: publicEnv('VITE_APP_LOGO') ?? '/logo.png',
 
   // Database
   database_url: procEnv.DATABASE_URL ?? '',

@@ -1,13 +1,13 @@
 {
-  "name": "redocor ai",
-  "slug": "redocorai",
-  "description": "An AI floor-plan and room design platform that turns a room photo or layout into a photorealistic interior concept with one click.",
-  "support_email": "support@redocor.com",
+  "name": "postersize ai",
+  "slug": "postersize-ai",
+  "description": "An AI-powered poster size finder and one-click poster design platform for print, digital, social, presentation, and large-format projects.",
+  "support_email": "support@postersize.org",
   "features": [
-    "One-click AI room design",
-    "AI floor-plan visualization",
-    "Photorealistic interior concepts",
-    "Room styles and custom instructions",
-    "Saved designs with image downloads"
+    "AI-powered poster size lookup and recommendations",
+    "One-click AI poster generation",
+    "Print, digital, social, and presentation formats",
+    "Live canvas previews with editable designs",
+    "Poster size guides, ratios, and PNG exports"
   ]
 }

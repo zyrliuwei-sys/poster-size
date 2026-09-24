@@ -595,6 +595,58 @@ export type NewTicketMessage = typeof ticketMessage.$inferInsert;
 // ─── Custom tables ───────────────────────────────────────────────────────────
 // Add your own tables below this line.
 
+// ─── Poster Size catalogue ───────────────────────────────────────────────────
+
+export const posterSize = table(
+  'poster_size',
+  {
+    id: text('id').primaryKey(),
+    slug: text('slug').notNull().unique(),
+    name: text('name').notNull(),
+    category: text('category').notNull(),
+    region: text('region').notNull(),
+    width: integer('width').notNull(),
+    height: integer('height').notNull(),
+    unit: text('unit').notNull(),
+    aspectRatio: text('aspect_ratio').notNull(),
+    description: text('description').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    status: text('status').notNull().default('published'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    index('idx_poster_size_category').on(t.category),
+    index('idx_poster_size_status').on(t.status),
+  ]
+);
+
+export const posterFavorite = table(
+  'poster_favorite',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    posterSizeId: text('poster_size_id')
+      .notNull()
+      .references(() => posterSize.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('uq_poster_favorite_user_size').on(t.userId, t.posterSizeId),
+    index('idx_poster_favorite_user').on(t.userId),
+  ]
+);
+
+export type PosterSize = typeof posterSize.$inferSelect;
+export type NewPosterSize = typeof posterSize.$inferInsert;
+export type PosterFavorite = typeof posterFavorite.$inferSelect;
+export type NewPosterFavorite = typeof posterFavorite.$inferInsert;
+
 // ─── Invite Codes ────────────────────────────────────────────────────────────
 
 export const inviteCode = table(

@@ -1,3 +1,5 @@
+import { Heart } from 'lucide-react';
+
 import { envConfigs } from '@/config';
 import { cn } from '@/lib/utils';
 
@@ -24,9 +26,12 @@ export function BuiltWithShipAny({ className }: { className?: string }) {
       )}
     >
       <span>Built with</span>
-      <span aria-hidden className="text-red-500">
-        ❤️
-      </span>
+      <Heart
+        aria-hidden
+        className="text-red-500"
+        size={13}
+        fill="currentColor"
+      />
       <span>ShipAny</span>
     </a>
   );

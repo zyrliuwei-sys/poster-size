@@ -4,37 +4,36 @@ import { envConfigs } from '@/config';
 import { socialMeta } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
-import { PosterHome } from '@/blocks/poster-home';
+import { PosterGeneratorBlock } from '@/blocks/poster-generator';
 
-function seoSchema(homeUrl: string, description: string) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: envConfigs.app_name,
-    url: homeUrl,
-    applicationCategory: 'DesignApplication',
-    operatingSystem: 'Web browser',
-    description,
-  };
-}
-
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute('/poster-generator')({
   loader: () => ({ locale: getLocale() }),
   head: ({ loaderData }) => {
     const locale = loaderData?.locale ?? 'en';
     const urlFor = (loc: string) =>
-      localizeUrl(`${envConfigs.app_url}/`, { locale: loc as any }).href;
-    const title = m['common.metadata.title']({}, { locale: locale as any });
-    const description = m['common.metadata.description'](
+      localizeUrl(`${envConfigs.app_url}/poster-generator`, {
+        locale: loc as any,
+      }).href;
+    const title = m['poster.generator.meta_title'](
       {},
       { locale: locale as any }
     );
+    const description = m['poster.generator.meta_description'](
+      {},
+      { locale: locale as any }
+    );
+
     return {
       meta: [
         { title },
         { name: 'description', content: description },
         { name: 'robots', content: 'index,follow' },
-        ...socialMeta({ title, description, url: urlFor(locale), locale }),
+        ...socialMeta({
+          title,
+          description,
+          url: urlFor(locale),
+          locale,
+        }),
       ],
       links: [
         { rel: 'canonical', href: urlFor(locale) },
@@ -45,13 +44,7 @@ export const Route = createFileRoute('/')({
         })),
         { rel: 'alternate', hrefLang: 'x-default', href: urlFor('en') },
       ],
-      scripts: [
-        {
-          type: 'application/ld+json',
-          children: JSON.stringify(seoSchema(urlFor(locale), description)),
-        },
-      ],
     };
   },
-  component: PosterHome,
+  component: PosterGeneratorBlock,
 });
