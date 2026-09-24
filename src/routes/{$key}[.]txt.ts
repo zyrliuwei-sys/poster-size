@@ -16,7 +16,7 @@ async function GET({
     !pathname.slice(1).includes('/')
       ? decodeURIComponent(pathname.slice(1, -4))
       : undefined;
-  const requestedKey = params.key || pathKey;
+  const requestedKey = pathKey ?? params.key;
   const storedKey = await getStoredIndexNowApiKey();
   if (!storedKey || requestedKey !== storedKey) {
     return new Response('Not found', {

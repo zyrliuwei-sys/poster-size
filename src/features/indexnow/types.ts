@@ -1,5 +1,6 @@
 export type IndexNowSettings = {
   configured: boolean;
+  apiKeyLocked: boolean;
   enabled: boolean;
   autoSubmit: boolean;
   apiKeyMasked: string | null;
@@ -7,6 +8,7 @@ export type IndexNowSettings = {
   lastSubmittedAt: string | null;
   lastSubmittedCount: number;
   lastError: string | null;
+  rateLimitedUntil: string | null;
 };
 
 export type IndexNowSubmission = {

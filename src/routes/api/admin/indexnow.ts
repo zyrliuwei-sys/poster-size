@@ -7,7 +7,6 @@ import {
   getIndexNowSettings,
   saveIndexNowSettings,
   submitSitemapUrls,
-  verifyIndexNowKey,
 } from '@/modules/indexnow/service';
 import * as postsService from '@/modules/posts/service';
 import { hasPermission } from '@/modules/rbac/service';
@@ -103,10 +102,6 @@ async function POST({ request }: { request: Request }) {
         await submitSitemapUrls(origin, await generatedSiteUrls(origin)),
         noStore
       );
-    }
-
-    if (action === 'verify') {
-      return respData(await verifyIndexNowKey(origin), noStore);
     }
 
     return respErr('Unsupported IndexNow action');

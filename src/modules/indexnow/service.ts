@@ -5,13 +5,17 @@ import { config } from '@/config/db/schema';
 import { decryptSecret, encryptSecret, isEncryptedSecret } from '@/lib/crypto';
 
 const API_KEY_CONFIG = 'indexnow_api_key';
+// IndexNow publishes this value in /{key}.txt by design.
+const INDEXNOW_API_KEY_OVERRIDE = '4c7f4e7d194d46498fb7775716c95d68';
 const ENABLED_CONFIG = 'indexnow_enabled';
 const AUTO_SUBMIT_CONFIG = 'indexnow_auto_submit';
 const LAST_SUBMITTED_AT_CONFIG = 'indexnow_last_submitted_at';
 const LAST_SUBMITTED_COUNT_CONFIG = 'indexnow_last_submitted_count';
 const LAST_ERROR_CONFIG = 'indexnow_last_error';
+const RATE_LIMITED_UNTIL_CONFIG = 'indexnow_rate_limited_until';
 const INDEXNOW_ENDPOINT = 'https://api.indexnow.org/indexnow';
 const MAX_URLS_PER_REQUEST = 10_000;
+const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 10 * 60 * 1000;
 const CONFIG_NAMES = [
   API_KEY_CONFIG,
   ENABLED_CONFIG,
@@ -19,6 +23,7 @@ const CONFIG_NAMES = [
   LAST_SUBMITTED_AT_CONFIG,
   LAST_SUBMITTED_COUNT_CONFIG,
   LAST_ERROR_CONFIG,
+  RATE_LIMITED_UNTIL_CONFIG,
 ] as const;
 
 type StoredSettings = {
@@ -28,6 +33,7 @@ type StoredSettings = {
   lastSubmittedAt: string | null;
   lastSubmittedCount: number;
   lastError: string | null;
+  rateLimitedUntil: string | null;
 };
 
 async function readConfig(
@@ -76,7 +82,7 @@ async function getStoredSettings(): Promise<StoredSettings> {
     ])
   );
   const encryptedApiKey = values.get(API_KEY_CONFIG);
-  const apiKey = encryptedApiKey
+  const storedApiKey = encryptedApiKey
     ? isEncryptedSecret(encryptedApiKey)
       ? ((await decryptSecret(encryptedApiKey)) ?? undefined)
       : encryptedApiKey
@@ -86,14 +92,22 @@ async function getStoredSettings(): Promise<StoredSettings> {
   const lastSubmittedAt = values.get(LAST_SUBMITTED_AT_CONFIG);
   const lastSubmittedCount = values.get(LAST_SUBMITTED_COUNT_CONFIG);
   const lastError = values.get(LAST_ERROR_CONFIG);
+  let rateLimitedUntil = values.get(RATE_LIMITED_UNTIL_CONFIG);
+  if (lastError?.includes('(429)') && !rateLimitedUntil) {
+    rateLimitedUntil = new Date(
+      Date.now() + DEFAULT_RATE_LIMIT_COOLDOWN_MS
+    ).toISOString();
+    await upsertConfigs([[RATE_LIMITED_UNTIL_CONFIG, rateLimitedUntil]]);
+  }
 
   return {
-    apiKey: apiKey || undefined,
+    apiKey: INDEXNOW_API_KEY_OVERRIDE || storedApiKey || undefined,
     enabled: enabled !== '0',
     autoSubmit: autoSubmit !== '0',
     lastSubmittedAt: lastSubmittedAt || null,
     lastSubmittedCount: Number.parseInt(lastSubmittedCount || '0', 10) || 0,
     lastError: lastError || null,
+    rateLimitedUntil: rateLimitedUntil || null,
   };
 }
 
@@ -102,13 +116,14 @@ export function getIndexNowKeyLocation(origin: string, apiKey: string): string {
 }
 
 export async function getStoredIndexNowApiKey(): Promise<string | undefined> {
-  return readConfig(API_KEY_CONFIG, true);
+  return INDEXNOW_API_KEY_OVERRIDE || readConfig(API_KEY_CONFIG, true);
 }
 
 export async function getIndexNowSettings(origin: string) {
   const stored = await getStoredSettings();
   return {
     configured: Boolean(stored.apiKey),
+    apiKeyLocked: Boolean(INDEXNOW_API_KEY_OVERRIDE),
     enabled: stored.enabled,
     autoSubmit: stored.autoSubmit,
     apiKeyMasked: stored.apiKey ? `••••••••${stored.apiKey.slice(-4)}` : null,
@@ -118,6 +133,7 @@ export async function getIndexNowSettings(origin: string) {
     lastSubmittedAt: stored.lastSubmittedAt,
     lastSubmittedCount: stored.lastSubmittedCount,
     lastError: stored.lastError,
+    rateLimitedUntil: stored.rateLimitedUntil,
   };
 }
 
@@ -131,7 +147,7 @@ export async function saveIndexNowSettings(params: {
     [AUTO_SUBMIT_CONFIG, params.autoSubmit ? '1' : '0'],
   ];
 
-  if (params.apiKey !== undefined) {
+  if (params.apiKey !== undefined && !INDEXNOW_API_KEY_OVERRIDE) {
     entries.push([API_KEY_CONFIG, await encryptSecret(params.apiKey)]);
   }
 
@@ -145,8 +161,24 @@ async function recordSubmission(params: { count: number; error?: string }) {
   ];
   if (!params.error) {
     entries.push([LAST_SUBMITTED_AT_CONFIG, new Date().toISOString()]);
+    entries.push([RATE_LIMITED_UNTIL_CONFIG, '']);
   }
   await upsertConfigs(entries);
+}
+
+function getRateLimitUntil(response: Response): string {
+  const now = Date.now();
+  const retryAfter = response.headers.get('Retry-After');
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    const parsed = Number.isFinite(seconds)
+      ? now + Math.max(0, seconds) * 1000
+      : Date.parse(retryAfter);
+    if (Number.isFinite(parsed) && parsed > now) {
+      return new Date(parsed).toISOString();
+    }
+  }
+  return new Date(now + DEFAULT_RATE_LIMIT_COOLDOWN_MS).toISOString();
 }
 
 function cleanUrls(origin: string, urls: string[]): string[] {
@@ -172,6 +204,15 @@ export async function submitIndexNowUrls(origin: string, urls: string[]) {
   const stored = await getStoredSettings();
   if (!stored.apiKey) throw new Error('IndexNow API key is not configured');
 
+  const rateLimitedUntil = stored.rateLimitedUntil
+    ? Date.parse(stored.rateLimitedUntil)
+    : Number.NaN;
+  if (Number.isFinite(rateLimitedUntil) && rateLimitedUntil > Date.now()) {
+    throw new Error(
+      `IndexNow submissions are paused after Bing's 429 response until ${new Date(rateLimitedUntil).toISOString()}.`
+    );
+  }
+
   const clean = cleanUrls(origin, urls);
   if (clean.length === 0) throw new Error('No URLs from this host were found');
 
@@ -196,8 +237,10 @@ export async function submitIndexNowUrls(origin: string, urls: string[]) {
       if (!response.ok) {
         const detail = (await response.text()).slice(0, 240);
         if (response.status === 429) {
+          const retryAt = getRateLimitUntil(response);
+          await upsertConfigs([[RATE_LIMITED_UNTIL_CONFIG, retryAt]]);
           throw new Error(
-            'IndexNow rate limit reached (429). Bing limits requests from this server; wait before retrying. Automatic retries are disabled to avoid extending the limit.'
+            `IndexNow rate limit reached (429). Bing limited requests from this server; submissions are paused until ${retryAt}.`
           );
         }
         throw new Error(
@@ -244,35 +287,6 @@ export async function submitSitemapUrls(
   const urls =
     generatedUrls.length > 0 ? generatedUrls : await getSitemapUrls(origin);
   return submitIndexNowUrls(origin, urls);
-}
-
-export async function verifyIndexNowKey(origin: string) {
-  const stored = await getStoredSettings();
-  if (!stored.apiKey) throw new Error('IndexNow API key is not configured');
-
-  const keyLocation = getIndexNowKeyLocation(origin, stored.apiKey);
-  const verificationUrl = new URL(keyLocation);
-  // Bypass any proxy/CDN cache that may still hold a 404 from before setup.
-  verificationUrl.searchParams.set('_indexnow_verify', Date.now().toString());
-  const response = await fetch(verificationUrl, {
-    cache: 'no-store',
-    headers: { 'Cache-Control': 'no-cache' },
-  });
-  const value = (await response.text()).trim();
-  if (!response.ok) {
-    return {
-      ok: false,
-      message: `The key file returned HTTP ${response.status} at ${keyLocation}`,
-    };
-  }
-  if (value !== stored.apiKey) {
-    return {
-      ok: false,
-      message: `The key file content does not match the configured API key at ${keyLocation}`,
-    };
-  }
-
-  return { ok: true, message: 'The IndexNow key file is reachable and valid' };
 }
 
 /** Best-effort notification for content mutations; publishing must not fail if IndexNow is down. */

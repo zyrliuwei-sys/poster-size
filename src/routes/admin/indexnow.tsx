@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { apiGet, apiPost } from '@/lib/api-client';
+import { apiGet, apiGetText, apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,14 +79,33 @@ function AdminIndexNowPage() {
       queryClient.invalidateQueries({ queryKey });
       toast.success(m['admin.indexnow.submitted']({ count: result.submitted }));
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => {
+      queryClient.invalidateQueries({ queryKey });
+      toast.error(error.message);
+    },
   });
 
   const verifyMutation = useMutation({
-    mutationFn: () =>
-      apiPost<IndexNowVerification>('/api/admin/indexnow', {
-        action: 'verify',
-      }),
+    mutationFn: async () => {
+      if (!settings?.keyLocation) {
+        throw new Error(m['admin.indexnow.key_missing']());
+      }
+      const keyUrl = new URL(settings.keyLocation);
+      const expectedKey = decodeURIComponent(
+        keyUrl.pathname.slice(1, -'.txt'.length)
+      );
+      const responseKey = await apiGetText(settings.keyLocation);
+      if (responseKey !== expectedKey) {
+        return {
+          ok: false,
+          message: m['admin.indexnow.verify_mismatch'](),
+        } satisfies IndexNowVerification;
+      }
+      return {
+        ok: true,
+        message: m['admin.indexnow.verify_success'](),
+      } satisfies IndexNowVerification;
+    },
     onSuccess: (result) => {
       if (result.ok) toast.success(result.message);
       else toast.error(result.message);
@@ -96,6 +115,7 @@ function AdminIndexNowPage() {
 
   const settings = settingsQuery.data;
   const saving = saveMutation.isPending;
+  const apiKeyLocked = Boolean(settings?.apiKeyLocked);
   const hasKey = Boolean(settings?.configured || apiKey.trim());
 
   return (
@@ -132,19 +152,24 @@ function AdminIndexNowPage() {
                 }
                 autoComplete="off"
                 className="font-mono"
-                disabled={saving}
+                disabled={saving || apiKeyLocked}
               />
               <Button
                 type="button"
                 variant="outline"
                 className="shrink-0"
                 onClick={() => setApiKey(generateKey())}
-                disabled={saving}
+                disabled={saving || apiKeyLocked}
               >
                 <KeyRound data-icon="inline-start" />
                 {m['admin.indexnow.generate']()}
               </Button>
             </div>
+            {apiKeyLocked ? (
+              <p className="text-muted-foreground text-xs">
+                {m['admin.indexnow.key_code_locked']()}
+              </p>
+            ) : null}
           </div>
 
           <div className="divide-y rounded-lg border px-3">
@@ -266,7 +291,11 @@ function AdminIndexNowPage() {
               <CircleAlert className="mt-0.5 size-4 shrink-0" />
               <span>
                 {settings.lastError.includes('(429)')
-                  ? m['admin.indexnow.rate_limited']()
+                  ? m['admin.indexnow.rate_limited']({
+                      time: settings.rateLimitedUntil
+                        ? new Date(settings.rateLimitedUntil).toLocaleString()
+                        : m['admin.indexnow.unknown_time'](),
+                    })
                   : settings.lastError}
               </span>
             </div>

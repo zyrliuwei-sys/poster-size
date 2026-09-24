@@ -48,6 +48,31 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 export const apiGet = <T>(url: string, init?: RequestInit) =>
   request<T>(url, init);
 
+/** Read a same-origin plain-text endpoint through the shared client boundary. */
+export async function apiGetText(url: string): Promise<string> {
+  if (typeof window === 'undefined') {
+    throw new Error('Text endpoint checks are only available in the browser');
+  }
+
+  const target = new URL(url, window.location.href);
+  if (target.origin !== window.location.origin) {
+    throw new Error('Only same-origin text endpoints are allowed');
+  }
+
+  const res = await fetch(target.href, {
+    cache: 'no-store',
+    headers: {
+      Accept: 'text/plain',
+      'Cache-Control': 'no-cache',
+    },
+  });
+  const body = await res.text();
+  if (!res.ok) {
+    throw new ApiError(res.status, `Request failed (${res.status})`);
+  }
+  return body.trim();
+}
+
 export const apiPost = <T = void>(url: string, body?: unknown) =>
   request<T>(url, {
     method: 'POST',
