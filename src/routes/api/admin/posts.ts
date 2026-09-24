@@ -21,7 +21,6 @@ function postUrls(request: Request, slug: string) {
   return [
     new URL(`/blog/${encodedSlug}`, origin).href,
     new URL(`/zh/blog/${encodedSlug}`, origin).href,
-    new URL('/sitemap.xml', origin).href,
   ];
 }
 

@@ -27,11 +27,6 @@ import { Switch } from '@/components/ui/switch';
 
 const queryKey = ['admin-indexnow'];
 
-type SaveResponse = IndexNowSettings & {
-  submission?: IndexNowSubmission;
-  submissionError?: string;
-};
-
 function generateKey() {
   return globalThis.crypto.randomUUID().replaceAll('-', '');
 }
@@ -60,7 +55,7 @@ function AdminIndexNowPage() {
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      apiPost<SaveResponse>('/api/admin/indexnow', {
+      apiPost<IndexNowSettings>('/api/admin/indexnow', {
         action: 'save',
         apiKey: apiKey.trim() || undefined,
         enabled,
@@ -70,7 +65,6 @@ function AdminIndexNowPage() {
       queryClient.setQueryData(queryKey, saved);
       setApiKey('');
       toast.success(m['admin.indexnow.saved']());
-      if (saved.submissionError) toast.error(saved.submissionError);
     },
     onError: (error: Error) => toast.error(error.message),
   });

@@ -195,6 +195,11 @@ export async function submitIndexNowUrls(origin: string, urls: string[]) {
 
       if (!response.ok) {
         const detail = (await response.text()).slice(0, 240);
+        if (response.status === 429) {
+          throw new Error(
+            'IndexNow rate limit reached (429). Bing limits requests from this server; wait before retrying. Automatic retries are disabled to avoid extending the limit.'
+          );
+        }
         throw new Error(
           `IndexNow rejected the request (${response.status})${detail ? `: ${detail}` : ''}`
         );
