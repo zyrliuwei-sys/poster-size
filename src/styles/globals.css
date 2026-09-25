@@ -2070,6 +2070,47 @@ body {
     margin-top: 1rem;
   }
 
+  .ps-size-table-wrap {
+    margin-top: 2.5rem;
+    overflow-x: auto;
+    border-top: 1px solid var(--ps-rule);
+  }
+
+  .ps-size-table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+    color: var(--ps-ink);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .ps-size-table th,
+  .ps-size-table td {
+    padding: 0.85rem 0.75rem;
+    border-bottom: 1px solid var(--ps-rule);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .ps-size-table thead th {
+    color: var(--ps-ink-soft);
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .ps-size-table tbody th {
+    min-width: 10rem;
+    font-weight: 650;
+  }
+
+  .ps-size-table td:nth-child(2),
+  .ps-size-table td:nth-child(3) {
+    white-space: nowrap;
+  }
+
   .ps-size-card {
     overflow: hidden;
     border: 1px solid var(--ps-rule);

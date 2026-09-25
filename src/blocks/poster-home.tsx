@@ -1,3 +1,5 @@
+import type { PosterSizeItem } from '@/types/poster-size';
+
 import { Link } from '@/core/i18n/navigation';
 import { m } from '@/paraglide/messages.js';
 import { PosterFooter } from '@/components/poster-footer';
@@ -58,7 +60,11 @@ const POSTER_FAQ = [
   { question: m['poster.faq.q5'], answer: m['poster.faq.a5'] },
 ] as const;
 
-export function PosterHome() {
+export function PosterHome({
+  initialItems,
+}: {
+  initialItems?: PosterSizeItem[];
+}) {
   return (
     <div className="ps-page">
       <PosterHeader />
@@ -118,7 +124,7 @@ export function PosterHome() {
           </div>
         </section>
 
-        <PosterSizeFinder compact />
+        <PosterSizeFinder compact initialItems={initialItems} />
 
         <section className="ps-next-step">
           <div className="ps-next-step-head">

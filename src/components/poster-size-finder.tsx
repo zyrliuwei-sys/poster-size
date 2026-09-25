@@ -34,7 +34,13 @@ function getPreviewAsset(item: PosterSizeItem) {
   return previewAssets.portrait;
 }
 
-export function PosterSizeFinder({ compact = false }: { compact?: boolean }) {
+export function PosterSizeFinder({
+  compact = false,
+  initialItems,
+}: {
+  compact?: boolean;
+  initialItems?: PosterSizeItem[];
+}) {
   const Heading = compact ? 'h2' : 'h1';
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<(typeof categories)[number]>('all');
@@ -54,6 +60,14 @@ export function PosterSizeFinder({ compact = false }: { compact?: boolean }) {
         `/api/poster-sizes${queryString ? `?${queryString}` : ''}`
       );
     },
+    initialData: initialItems
+      ? {
+          items: initialItems,
+          favoriteIds: [],
+          total: initialItems.length,
+        }
+      : undefined,
+    initialDataUpdatedAt: 0,
     staleTime: 60_000,
   });
 
@@ -90,7 +104,11 @@ export function PosterSizeFinder({ compact = false }: { compact?: boolean }) {
       <div className="ps-catalogue-head">
         <div>
           <p className="ps-eyebrow">{m['poster.catalogue.kicker']()}</p>
-          <Heading>{m['poster.catalogue.title']()}</Heading>
+          <Heading>
+            {compact
+              ? m['poster.catalogue.home_title']()
+              : m['poster.catalogue.title']()}
+          </Heading>
           <p className="ps-catalogue-description">
             {m['poster.catalogue.description']()}
           </p>
@@ -172,7 +190,11 @@ export function PosterSizeFinder({ compact = false }: { compact?: boolean }) {
             const isFavorite = favoriteIds.has(item.id);
             const previewAsset = getPreviewAsset(item);
             return (
-              <article className="ps-size-card" key={item.id}>
+              <article
+                className="ps-size-card"
+                id={compact ? undefined : item.slug}
+                key={item.id}
+              >
                 <div className="ps-size-card-topline">
                   <span>{item.category}</span>
                   <button
@@ -234,6 +256,35 @@ export function PosterSizeFinder({ compact = false }: { compact?: boolean }) {
           })}
         </div>
       )}
+      {!compact && items.length > 0 ? (
+        <div className="ps-size-table-wrap">
+          <table className="ps-size-table">
+            <caption className="sr-only">
+              {m['poster.catalogue.table_caption']()}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">{m['poster.catalogue.table_name']()}</th>
+                <th scope="col">{m['poster.catalogue.table_dimensions']()}</th>
+                <th scope="col">{m['poster.catalogue.table_ratio']()}</th>
+                <th scope="col">{m['poster.catalogue.table_use']()}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={`table-${item.id}`}>
+                  <th scope="row">{item.name}</th>
+                  <td>
+                    {item.width} × {item.height} {item.unit}
+                  </td>
+                  <td>{item.aspectRatio}</td>
+                  <td>{item.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </section>
   );
 }

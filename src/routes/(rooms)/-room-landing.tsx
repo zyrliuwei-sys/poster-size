@@ -35,6 +35,8 @@ type RoomLanding = {
   imageStyle: Style;
   /** Three styles showcased under "styles that suit a {room}". */
   featuredStyles: Style[];
+  /** Optional room-specific thumbnails so a room page does not show another room. */
+  styleThumbs?: Partial<Record<Style, string>>;
 };
 
 const AVIF = { imageWidth: 1376, imageHeight: 768 };
@@ -55,6 +57,11 @@ export const ROOM_LANDINGS: Record<RoomLandingKey, RoomLanding> = {
     ...AVIF,
     imageStyle: 'scandinavian',
     featuredStyles: ['scandinavian', 'midcentury', 'minimalist'],
+    styleThumbs: {
+      scandinavian: '/imgs/demo/bedroom-scandinavian.avif',
+      minimalist: '/imgs/demo/bedroom-minimalist.avif',
+      midcentury: '/imgs/generated/style-midcentury.png',
+    },
   },
   living: {
     studioRoom: 'living',
@@ -345,15 +352,20 @@ function RoomLandingPage({ roomKey }: { roomKey: RoomLandingKey }) {
                   key={s}
                   className="overflow-hidden rounded-2xl bg-[#f5f5f7]"
                 >
-                  <img
-                    src={STYLE_THUMBS[s]}
-                    alt={m[`create.style.${s}` as 'create.style.modern']()}
-                    width={STYLE_THUMBS[s].endsWith('.avif') ? 1376 : 800}
-                    height={STYLE_THUMBS[s].endsWith('.avif') ? 768 : 600}
-                    loading="lazy"
-                    decoding="async"
-                    className="aspect-[4/3] w-full object-cover"
-                  />
+                  {(() => {
+                    const image = config.styleThumbs?.[s] ?? STYLE_THUMBS[s];
+                    return (
+                      <img
+                        src={image}
+                        alt={m[`create.style.${s}` as 'create.style.modern']()}
+                        width={image.endsWith('.avif') ? 1376 : 800}
+                        height={image.endsWith('.avif') ? 768 : 600}
+                        loading="lazy"
+                        decoding="async"
+                        className="aspect-[4/3] w-full object-cover"
+                      />
+                    );
+                  })()}
                   <div className="p-5">
                     <h3 className="text-base font-semibold tracking-tight">
                       {m[`create.style.${s}` as 'create.style.modern']()}
@@ -535,23 +547,38 @@ export function roomLandingRouteOptions(key: RoomLandingKey) {
             type: 'application/ld+json',
             children: JSON.stringify({
               '@context': 'https://schema.org',
-              '@type': 'BreadcrumbList',
-              itemListElement: [
+              '@graph': [
                 {
-                  '@type': 'ListItem',
-                  position: 1,
-                  name: 'Home',
-                  item: localizeUrl(`${envConfigs.app_url}/`, { locale: L })
-                    .href,
-                },
-                {
-                  '@type': 'ListItem',
-                  position: 2,
+                  '@type': 'SoftwareApplication',
                   name: m[`roompage.${key}.title` as 'roompage.bathroom.title'](
                     {},
                     { locale: L }
                   ),
-                  item: urlFor(locale),
+                  applicationCategory: 'HomeAndGardenApplication',
+                  operatingSystem: 'Web browser',
+                  description,
+                  url: urlFor(locale),
+                },
+                {
+                  '@type': 'BreadcrumbList',
+                  itemListElement: [
+                    {
+                      '@type': 'ListItem',
+                      position: 1,
+                      name: 'Home',
+                      item: localizeUrl(`${envConfigs.app_url}/`, {
+                        locale: L,
+                      }).href,
+                    },
+                    {
+                      '@type': 'ListItem',
+                      position: 2,
+                      name: m[
+                        `roompage.${key}.title` as 'roompage.bathroom.title'
+                      ]({}, { locale: L }),
+                      item: urlFor(locale),
+                    },
+                  ],
                 },
               ],
             }),

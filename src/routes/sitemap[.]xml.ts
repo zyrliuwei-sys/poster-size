@@ -12,6 +12,8 @@ export const STATIC_PATHS = [
   '/ai-room-design-free',
   ...Object.values(ROOM_PATHS),
   '/size-guide',
+  '/poster-sizes/18x24',
+  '/poster-sizes/24x36',
   '/poster-generator',
   '/pricing',
   '/blog',
@@ -58,7 +60,7 @@ export const Route = createFileRoute('/sitemap.xml')({
       GET: async () => {
         const entries: Entry[] = STATIC_PATHS.map((path) => ({
           path,
-          changeFrequency: path === '/blog' ? 'daily' : 'weekly',
+          changeFrequency: 'weekly',
           priority: path === '' ? 1 : 0.8,
         }));
 
