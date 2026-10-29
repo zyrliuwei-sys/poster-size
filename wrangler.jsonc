@@ -24,7 +24,7 @@
   // The build keeps the postgres driver in the bundle when
   // DATABASE_PROVIDER=postgresql — see vite.config.ts.
   "hyperdrive": [
-    { "binding": "HYPERDRIVE", "id": "f1ab0ea7da274e7da869b3e2ba4a68b2" },
+    { "binding": "HYPERDRIVE", "id": "e71a0fe9e3c34e9ba6289eb06a781b31" },
   ],
   //
   // Other optional bindings — uncomment when needed:
