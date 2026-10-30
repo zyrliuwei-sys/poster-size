@@ -1,307 +1,191 @@
+/**
+ * IndexNow — push changed URLs to Bing, Yandex, Naver, Seznam, … in one call.
+ *
+ * The key lives in the DB config table (`indexnow_key`, set at /admin/indexnow)
+ * and is served at `/{key}.txt` (src/routes/{$key}[.]txt.ts) so search
+ * engines can verify the site owns it.
+ * Spec: https://www.indexnow.org/documentation
+ *
+ * The key-file check and sitemap reading run in the admin's browser: a
+ * Cloudflare Worker can't fetch its own custom domain (HTTP 522).
+ */
+
 import { eq, inArray } from 'drizzle-orm';
 
 import { db } from '@/core/db';
+import { envConfigs } from '@/config';
 import { config } from '@/config/db/schema';
-import { decryptSecret, encryptSecret, isEncryptedSecret } from '@/lib/crypto';
+import { decryptSecret, encryptSecret } from '@/lib/crypto';
 
-const API_KEY_CONFIG = 'indexnow_api_key';
-// IndexNow publishes this value in /{key}.txt by design.
-const INDEXNOW_API_KEY_OVERRIDE = '4c7f4e7d194d46498fb7775716c95d68';
-const ENABLED_CONFIG = 'indexnow_enabled';
-const AUTO_SUBMIT_CONFIG = 'indexnow_auto_submit';
-const LAST_SUBMITTED_AT_CONFIG = 'indexnow_last_submitted_at';
-const LAST_SUBMITTED_COUNT_CONFIG = 'indexnow_last_submitted_count';
-const LAST_ERROR_CONFIG = 'indexnow_last_error';
-const RATE_LIMITED_UNTIL_CONFIG = 'indexnow_rate_limited_until';
-const INDEXNOW_ENDPOINT = 'https://api.indexnow.org/indexnow';
-const MAX_URLS_PER_REQUEST = 10_000;
-const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 10 * 60 * 1000;
-const CONFIG_NAMES = [
-  API_KEY_CONFIG,
-  ENABLED_CONFIG,
-  AUTO_SUBMIT_CONFIG,
-  LAST_SUBMITTED_AT_CONFIG,
-  LAST_SUBMITTED_COUNT_CONFIG,
-  LAST_ERROR_CONFIG,
-  RATE_LIMITED_UNTIL_CONFIG,
-] as const;
+export const INDEXNOW_CONFIG_KEY = 'indexnow_key';
+// The old deployment published this key. Keep its verification URL working
+// until an administrator saves a replacement; it is no longer locked in code.
+const LEGACY_DEFAULT_KEY = '4c7f4e7d194d46498fb7775716c95d68';
+// Tried in order. Submissions are shared between engines, so one success is
+// enough; the next is only tried on an error such as 429 (Workers egress IPs
+// are shared and can be rate-limited by one endpoint but not another).
+export const INDEXNOW_ENDPOINTS = [
+  'https://api.indexnow.org/indexnow',
+  'https://www.bing.com/indexnow',
+  'https://yandex.com/indexnow',
+];
+const MAX_URLS_PER_POST = 10_000;
 
-type StoredSettings = {
-  apiKey?: string;
-  enabled: boolean;
-  autoSubmit: boolean;
-  lastSubmittedAt: string | null;
-  lastSubmittedCount: number;
-  lastError: string | null;
-  rateLimitedUntil: string | null;
-};
-
-async function readConfig(
-  name: string,
-  secret = false
-): Promise<string | undefined> {
-  const [row] = await db()
-    .select({ value: config.value })
-    .from(config)
-    .where(eq(config.name, name))
-    .limit(1);
-
-  const value = row?.value;
-  if (typeof value !== 'string' || value.length === 0) return undefined;
-  if (!secret || !isEncryptedSecret(value)) return value;
-  return (await decryptSecret(value)) ?? undefined;
+/** 8–128 chars of a-z, A-Z, 0-9 and dashes. */
+export function isValidIndexNowKey(key: string) {
+  return /^[a-zA-Z0-9-]{8,128}$/.test(key);
 }
 
-async function upsertConfigs(entries: Array<[string, string]>) {
-  await db().transaction(async (tx: any) => {
-    for (const [name, value] of entries) {
-      const [existing] = await tx
-        .select({ name: config.name })
-        .from(config)
-        .where(eq(config.name, name))
-        .limit(1);
-
-      if (existing) {
-        await tx.update(config).set({ value }).where(eq(config.name, name));
-      } else {
-        await tx.insert(config).values({ name, value });
-      }
-    }
-  });
-}
-
-async function getStoredSettings(): Promise<StoredSettings> {
+export async function getIndexNowKey() {
   const rows = await db()
     .select({ name: config.name, value: config.value })
     .from(config)
-    .where(inArray(config.name, CONFIG_NAMES));
-  const values = new Map<string, string | undefined>(
-    rows.map((row: { name: string; value: string | null }) => [
-      row.name,
-      row.value ?? undefined,
-    ])
-  );
-  const encryptedApiKey = values.get(API_KEY_CONFIG);
-  const storedApiKey = encryptedApiKey
-    ? isEncryptedSecret(encryptedApiKey)
-      ? ((await decryptSecret(encryptedApiKey)) ?? undefined)
-      : encryptedApiKey
-    : undefined;
-  const enabled = values.get(ENABLED_CONFIG);
-  const autoSubmit = values.get(AUTO_SUBMIT_CONFIG);
-  const lastSubmittedAt = values.get(LAST_SUBMITTED_AT_CONFIG);
-  const lastSubmittedCount = values.get(LAST_SUBMITTED_COUNT_CONFIG);
-  const lastError = values.get(LAST_ERROR_CONFIG);
-  let rateLimitedUntil = values.get(RATE_LIMITED_UNTIL_CONFIG);
-  if (lastError?.includes('(429)') && !rateLimitedUntil) {
-    rateLimitedUntil = new Date(
-      Date.now() + DEFAULT_RATE_LIMIT_COOLDOWN_MS
-    ).toISOString();
-    await upsertConfigs([[RATE_LIMITED_UNTIL_CONFIG, rateLimitedUntil]]);
+    .where(inArray(config.name, [INDEXNOW_CONFIG_KEY, 'indexnow_api_key']));
+  for (const name of [INDEXNOW_CONFIG_KEY, 'indexnow_api_key']) {
+    const stored = rows.find(
+      (row: { name: string }) => row.name === name
+    )?.value;
+    if (!stored) continue;
+    const key = (await decryptSecret(stored))?.trim();
+    if (key && isValidIndexNowKey(key)) return key;
   }
-
-  return {
-    apiKey: INDEXNOW_API_KEY_OVERRIDE || storedApiKey || undefined,
-    enabled: enabled !== '0',
-    autoSubmit: autoSubmit !== '0',
-    lastSubmittedAt: lastSubmittedAt || null,
-    lastSubmittedCount: Number.parseInt(lastSubmittedCount || '0', 10) || 0,
-    lastError: lastError || null,
-    rateLimitedUntil: rateLimitedUntil || null,
-  };
+  return LEGACY_DEFAULT_KEY;
 }
 
-export function getIndexNowKeyLocation(origin: string, apiKey: string): string {
-  return new URL(`/${apiKey}.txt`, origin).href;
-}
-
-export async function getStoredIndexNowApiKey(): Promise<string | undefined> {
-  return INDEXNOW_API_KEY_OVERRIDE || readConfig(API_KEY_CONFIG, true);
-}
-
-export async function getIndexNowSettings(origin: string) {
-  const stored = await getStoredSettings();
-  return {
-    configured: Boolean(stored.apiKey),
-    apiKeyLocked: Boolean(INDEXNOW_API_KEY_OVERRIDE),
-    enabled: stored.enabled,
-    autoSubmit: stored.autoSubmit,
-    apiKeyMasked: stored.apiKey ? `••••••••${stored.apiKey.slice(-4)}` : null,
-    keyLocation: stored.apiKey
-      ? getIndexNowKeyLocation(origin, stored.apiKey)
-      : null,
-    lastSubmittedAt: stored.lastSubmittedAt,
-    lastSubmittedCount: stored.lastSubmittedCount,
-    lastError: stored.lastError,
-    rateLimitedUntil: stored.rateLimitedUntil,
-  };
-}
-
-export async function saveIndexNowSettings(params: {
-  apiKey?: string;
-  enabled: boolean;
-  autoSubmit: boolean;
-}) {
-  const entries: Array<[string, string]> = [
-    [ENABLED_CONFIG, params.enabled ? '1' : '0'],
-    [AUTO_SUBMIT_CONFIG, params.autoSubmit ? '1' : '0'],
-  ];
-
-  if (params.apiKey !== undefined && !INDEXNOW_API_KEY_OVERRIDE) {
-    entries.push([API_KEY_CONFIG, await encryptSecret(params.apiKey)]);
-  }
-
-  await upsertConfigs(entries);
-}
-
-async function recordSubmission(params: { count: number; error?: string }) {
-  const entries: Array<[string, string]> = [
-    [LAST_SUBMITTED_COUNT_CONFIG, String(params.count)],
-    [LAST_ERROR_CONFIG, params.error || ''],
-  ];
-  if (!params.error) {
-    entries.push([LAST_SUBMITTED_AT_CONFIG, new Date().toISOString()]);
-    entries.push([RATE_LIMITED_UNTIL_CONFIG, '']);
-  }
-  await upsertConfigs(entries);
-}
-
-function getRateLimitUntil(response: Response): string {
-  const now = Date.now();
-  const retryAfter = response.headers.get('Retry-After');
-  if (retryAfter) {
-    const seconds = Number(retryAfter);
-    const parsed = Number.isFinite(seconds)
-      ? now + Math.max(0, seconds) * 1000
-      : Date.parse(retryAfter);
-    if (Number.isFinite(parsed) && parsed > now) {
-      return new Date(parsed).toISOString();
+export async function saveIndexNowKey(key: string) {
+  key = key.trim();
+  if (!isValidIndexNowKey(key)) throw new Error('Invalid IndexNow key');
+  const value = await encryptSecret(key);
+  await db().transaction(async (tx: ReturnType<typeof db>) => {
+    const [existing] = await tx
+      .select({ name: config.name })
+      .from(config)
+      .where(eq(config.name, INDEXNOW_CONFIG_KEY))
+      .limit(1);
+    if (existing) {
+      await tx
+        .update(config)
+        .set({ value })
+        .where(eq(config.name, INDEXNOW_CONFIG_KEY));
+    } else {
+      await tx.insert(config).values({ name: INDEXNOW_CONFIG_KEY, value });
     }
-  }
-  return new Date(now + DEFAULT_RATE_LIMIT_COOLDOWN_MS).toISOString();
+  });
 }
 
-function cleanUrls(origin: string, urls: string[]): string[] {
+export function siteOrigin() {
+  return new URL(envConfigs.app_url).origin;
+}
+
+export function keyFileUrl(key: string) {
+  return `${siteOrigin()}/${key}.txt`;
+}
+
+const MEANINGS: Record<number, string> = {
+  200: 'OK — URLs submitted',
+  202: 'Accepted — key validation pending',
+  400: 'Bad request — invalid format',
+  403: 'Forbidden — key not valid (key file missing or wrong content)',
+  422: "Unprocessable — URLs don't belong to this host or key doesn't match",
+  429: 'Too many requests — slow down',
+};
+
+/**
+ * Submit URLs (must be on this site's host). Splits into 10k batches.
+ * Returns one result per batch with the engine's status code.
+ */
+export async function submitUrls(key: string, urls: string[]) {
+  if (!isValidIndexNowKey(key)) throw new Error('Invalid IndexNow key');
+  const origin = siteOrigin();
   const host = new URL(origin).host;
-  return Array.from(
-    new Set(
-      urls.filter((value) => {
-        try {
-          const url = new URL(value);
-          return (
-            (url.protocol === 'http:' || url.protocol === 'https:') &&
-            url.host === host
-          );
-        } catch {
-          return false;
-        }
-      })
-    )
-  );
-}
-
-export async function submitIndexNowUrls(origin: string, urls: string[]) {
-  const stored = await getStoredSettings();
-  if (!stored.apiKey) throw new Error('IndexNow API key is not configured');
-
-  const rateLimitedUntil = stored.rateLimitedUntil
-    ? Date.parse(stored.rateLimitedUntil)
-    : Number.NaN;
-  if (Number.isFinite(rateLimitedUntil) && rateLimitedUntil > Date.now()) {
+  const list = [...new Set(urls.map((u) => u.trim()).filter(Boolean))];
+  const foreign = list.filter((u) => {
+    try {
+      const url = new URL(u);
+      return (
+        !['http:', 'https:'].includes(url.protocol) ||
+        url.host !== host ||
+        Boolean(url.username || url.password)
+      );
+    } catch {
+      return true;
+    }
+  });
+  if (foreign.length) {
     throw new Error(
-      `IndexNow submissions are paused after Bing's 429 response until ${new Date(rateLimitedUntil).toISOString()}.`
+      `URLs must be on ${host}: ${foreign.slice(0, 3).join(', ')}`
     );
   }
+  if (!list.length) throw new Error('No URLs to submit');
 
-  const clean = cleanUrls(origin, urls);
-  if (clean.length === 0) throw new Error('No URLs from this host were found');
-
-  const keyLocation = getIndexNowKeyLocation(origin, stored.apiKey);
-  let submitted = 0;
-  let batches = 0;
-
-  try {
-    for (let i = 0; i < clean.length; i += MAX_URLS_PER_REQUEST) {
-      const urlList = clean.slice(i, i + MAX_URLS_PER_REQUEST);
-      const response = await fetch(INDEXNOW_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: JSON.stringify({
-          host: new URL(origin).host,
-          key: stored.apiKey,
-          keyLocation,
-          urlList,
-        }),
-      });
-
-      if (!response.ok) {
-        const detail = (await response.text()).slice(0, 240);
-        if (response.status === 429) {
-          const retryAt = getRateLimitUntil(response);
-          await upsertConfigs([[RATE_LIMITED_UNTIL_CONFIG, retryAt]]);
-          throw new Error(
-            `IndexNow rate limit reached (429). Bing limited requests from this server; submissions are paused until ${retryAt}.`
-          );
-        }
-        throw new Error(
-          `IndexNow rejected the request (${response.status})${detail ? `: ${detail}` : ''}`
-        );
+  const results = [];
+  for (let i = 0; i < list.length; i += MAX_URLS_PER_POST) {
+    const batch = list.slice(i, i + MAX_URLS_PER_POST);
+    const body = JSON.stringify({
+      host,
+      key,
+      keyLocation: keyFileUrl(key),
+      urlList: batch,
+    });
+    const attempts: { endpoint: string; status: number; meaning: string }[] =
+      [];
+    for (const endpoint of INDEXNOW_ENDPOINTS) {
+      let status = 0;
+      let meaning: string;
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          body,
+          signal: AbortSignal.timeout(15_000),
+        });
+        status = res.status;
+        meaning = MEANINGS[status] ?? (await res.text()).slice(0, 200);
+      } catch (error) {
+        meaning = error instanceof Error ? error.message : 'Network error';
       }
-
-      submitted += urlList.length;
-      batches += 1;
+      attempts.push({ endpoint: new URL(endpoint).host, status, meaning });
+      if (status === 200 || status === 202) break;
+      // A bad request or key won't get better on another engine.
+      if (status === 400 || status === 403 || status === 422) break;
     }
-
-    await recordSubmission({ count: submitted });
-    return { submitted, batches, status: 200 };
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'IndexNow request failed';
-    await recordSubmission({ count: submitted, error: message });
-    throw error;
+    const last = attempts[attempts.length - 1];
+    results.push({
+      ok: last.status === 200 || last.status === 202,
+      count: batch.length,
+      attempts,
+    });
   }
+  return results;
 }
 
-export async function getSitemapUrls(origin: string): Promise<string[]> {
-  const response = await fetch(new URL('/sitemap.xml', origin), {
-    headers: { Accept: 'application/xml, text/xml' },
-  });
-  if (!response.ok) {
-    throw new Error(`Could not load sitemap (${response.status})`);
-  }
-
-  const xml = await response.text();
-  const urls = Array.from(xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/gim)).map(
-    (match) => match[1]
-  );
-  const alternateUrls = Array.from(
-    xml.matchAll(/hreflang="[^"]+"\s+href="([^"]+)"/gim)
-  ).map((match) => match[1]);
-  return Array.from(new Set([...urls, ...alternateUrls]));
-}
-
-export async function submitSitemapUrls(
-  origin: string,
-  generatedUrls: string[] = []
-) {
-  const urls =
-    generatedUrls.length > 0 ? generatedUrls : await getSitemapUrls(origin);
-  return submitIndexNowUrls(origin, urls);
-}
-
-/** Best-effort notification for content mutations; publishing must not fail if IndexNow is down. */
+/** Preserve existing article notifications without making publishing fail. */
 export async function notifyIndexNow(
-  origin: string,
+  _origin: string,
   urls: string[]
 ): Promise<void> {
-  const stored = await getStoredSettings();
-  if (!stored.apiKey || !stored.enabled || !stored.autoSubmit) return;
-
   try {
-    await submitIndexNowUrls(origin, urls);
+    const rows = await db()
+      .select({ name: config.name, value: config.value })
+      .from(config)
+      .where(
+        inArray(config.name, ['indexnow_enabled', 'indexnow_auto_submit'])
+      );
+    if (rows.some((row: { value: string | null }) => row.value === '0')) return;
+    const key = await getIndexNowKey();
+    if (!key) return;
+    // Use the configured public origin, including when the admin is on a preview URL.
+    const canonicalUrls = urls.map((url) => {
+      const parsed = new URL(url);
+      return new URL(parsed.pathname + parsed.search, siteOrigin()).href;
+    });
+    const results = await submitUrls(key, canonicalUrls);
+    if (results.some((result) => !result.ok)) {
+      console.warn('[indexnow] article notification rejected', results);
+    }
   } catch (error) {
     console.warn(
-      '[indexnow] notification failed:',
+      '[indexnow] article notification failed:',
       error instanceof Error ? error.message : error
     );
   }

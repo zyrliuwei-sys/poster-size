@@ -1,303 +1,286 @@
 import { useEffect, useState } from 'react';
+import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import { checkKeyFile, readSitemap } from '@/features/indexnow/client';
 import type {
-  IndexNowSettings,
-  IndexNowSubmission,
-  IndexNowVerification,
+  IndexNowStatus as Status,
+  IndexNowSubmitResult as SubmitResult,
 } from '@/features/indexnow/types';
-import {
-  Check,
-  CircleAlert,
-  Copy,
-  ExternalLink,
-  KeyRound,
-  Save,
-  Send,
-  ShieldCheck,
-} from 'lucide-react';
+import { CheckCircle2, ExternalLink, Loader2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
-import { apiGet, apiGetText, apiPost } from '@/lib/api-client';
+import { apiGet, apiPost, apiPut } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
+import { TextField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 
-const queryKey = ['admin-indexnow'];
+const QUERY_KEY = ['admin-indexnow'];
 
-function generateKey() {
-  return globalThis.crypto.randomUUID().replaceAll('-', '');
-}
-
-async function copyText(value: string) {
-  await navigator.clipboard.writeText(value);
-  toast.success(m['admin.indexnow.copied']());
-}
-
-function AdminIndexNowPage() {
+function IndexNowPage() {
+  const keySchema = z.object({
+    key: z
+      .string()
+      .trim()
+      .regex(/^[a-zA-Z0-9-]{8,128}$/, m['admin.indexnow.key_invalid']()),
+  });
   const queryClient = useQueryClient();
-  const [apiKey, setApiKey] = useState('');
-  const [enabled, setEnabled] = useState(true);
-  const [autoSubmit, setAutoSubmit] = useState(true);
+  const [urls, setUrls] = useState('');
+  const [result, setResult] = useState<SubmitResult | null>(null);
 
-  const settingsQuery = useQuery({
-    queryKey,
-    queryFn: () => apiGet<IndexNowSettings>('/api/admin/indexnow'),
+  const statusQuery = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: () => apiGet<Status>('/api/admin/indexnow'),
+  });
+  const status = statusQuery.data;
+
+  const keyFileQuery = useQuery({
+    queryKey: [...QUERY_KEY, 'key-file', status?.key],
+    queryFn: () => checkKeyFile(status!.key!),
+    enabled: !!status?.key,
   });
 
-  useEffect(() => {
-    if (!settingsQuery.data) return;
-    setEnabled(settingsQuery.data.enabled);
-    setAutoSubmit(settingsQuery.data.autoSubmit);
-  }, [settingsQuery.data]);
-
-  const saveMutation = useMutation({
-    mutationFn: () =>
-      apiPost<IndexNowSettings>('/api/admin/indexnow', {
-        action: 'save',
-        apiKey: apiKey.trim() || undefined,
-        enabled,
-        autoSubmit,
-      }),
-    onSuccess: (saved) => {
-      queryClient.setQueryData(queryKey, saved);
-      setApiKey('');
+  const saveKey = useMutation({
+    mutationFn: (key: string) => apiPut<Status>('/api/admin/indexnow', { key }),
+    onSuccess: (data) => {
+      setResult(null);
+      queryClient.setQueryData(QUERY_KEY, data);
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEY, 'key-file'] });
       toast.success(m['admin.indexnow.saved']());
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (e: Error) => toast.error(e.message),
   });
 
-  const submitMutation = useMutation({
-    mutationFn: () =>
-      apiPost<IndexNowSubmission>('/api/admin/indexnow', {
-        action: 'submit',
+  const submit = useMutation({
+    mutationFn: async (source: 'sitemap' | string[]) =>
+      apiPost<SubmitResult>('/api/admin/indexnow', {
+        urls: source === 'sitemap' ? await readSitemap() : source,
       }),
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey });
-      toast.success(m['admin.indexnow.submitted']({ count: result.submitted }));
+    onSuccess: (data) => {
+      setResult(data);
+      if (data.results.every((r) => r.ok)) {
+        toast.success(m['admin.indexnow.submitted']({ count: data.submitted }));
+      } else {
+        toast.error(data.results.find((r) => !r.ok)?.attempts.at(-1)?.meaning);
+      }
     },
-    onError: (error: Error) => {
-      queryClient.invalidateQueries({ queryKey });
-      toast.error(error.message);
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const form = useForm({
+    defaultValues: { key: '' },
+    validators: { onSubmit: keySchema },
+    onSubmit: async ({ value }) => {
+      await saveKey.mutateAsync(value.key.trim());
     },
   });
 
-  const verifyMutation = useMutation({
-    mutationFn: async () => {
-      if (!settings?.keyLocation) {
-        throw new Error(m['admin.indexnow.key_missing']());
-      }
-      const keyUrl = new URL(settings.keyLocation);
-      const expectedKey = decodeURIComponent(
-        keyUrl.pathname.slice(1, -'.txt'.length)
-      );
-      const responseKey = await apiGetText(settings.keyLocation);
-      if (responseKey !== expectedKey) {
-        return {
-          ok: false,
-          message: m['admin.indexnow.verify_mismatch'](),
-        } satisfies IndexNowVerification;
-      }
-      return {
-        ok: true,
-        message: m['admin.indexnow.verify_success'](),
-      } satisfies IndexNowVerification;
-    },
-    onSuccess: (result) => {
-      if (result.ok) toast.success(result.message);
-      else toast.error(result.message);
-    },
-    onError: (error: Error) => toast.error(error.message),
-  });
+  // Prefill the saved key once it loads.
+  useEffect(() => {
+    if (status?.key && !form.state.values.key) {
+      form.setFieldValue('key', status.key);
+    }
+  }, [status?.key]);
 
-  const settings = settingsQuery.data;
-  const saving = saveMutation.isPending;
-  const apiKeyLocked = Boolean(settings?.apiKeyLocked);
-  const hasKey = Boolean(settings?.configured || apiKey.trim());
+  const keyFile = keyFileQuery.data;
 
   return (
-    <div className="max-w-3xl space-y-4 p-4 md:p-6">
-      <div className="mb-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {m['admin.indexnow.title']()}
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-2xl font-bold">{m['admin.indexnow.title']()}</h1>
+        <p className="text-muted-foreground">
           {m['admin.indexnow.description']()}
         </p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <KeyRound className="text-muted-foreground size-4" />
-            {m['admin.indexnow.install_title']()}
-          </CardTitle>
+      {statusQuery.isError && (
+        <p role="alert" className="text-destructive text-sm">
+          {statusQuery.error.message}
+        </p>
+      )}
+
+      <Card className="max-w-3xl">
+        <CardHeader>
+          <CardTitle>{m['admin.indexnow.step_key']()}</CardTitle>
+          <CardDescription>
+            {m['admin.indexnow.step_key_desc']()}{' '}
+            <a
+              className="underline"
+              href="https://www.bing.com/indexnow/getstarted"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              bing.com/indexnow/getstarted
+            </a>
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="indexnow-api-key">
-              {m['admin.indexnow.key_label']()}
-            </Label>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                id="indexnow-api-key"
-                value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-                placeholder={
-                  settings?.apiKeyMasked ||
-                  m['admin.indexnow.key_placeholder']()
-                }
-                autoComplete="off"
-                className="font-mono"
-                disabled={saving || apiKeyLocked}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="shrink-0"
-                onClick={() => setApiKey(generateKey())}
-                disabled={saving || apiKeyLocked}
-              >
-                <KeyRound data-icon="inline-start" />
-                {m['admin.indexnow.generate']()}
-              </Button>
-            </div>
-            {apiKeyLocked ? (
-              <p className="text-muted-foreground text-xs">
-                {m['admin.indexnow.key_code_locked']()}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="divide-y rounded-lg border px-3">
-            <div className="flex items-center justify-between gap-4 py-3">
-              <div>
-                <Label className="text-sm" htmlFor="indexnow-enabled">
-                  {m['admin.indexnow.enabled']()}
-                </Label>
-              </div>
-              <Switch
-                id="indexnow-enabled"
-                checked={enabled}
-                onCheckedChange={setEnabled}
-              />
-            </div>
-            <div className="flex items-center justify-between gap-4 py-3">
-              <div>
-                <Label className="text-sm" htmlFor="indexnow-auto-submit">
-                  {m['admin.indexnow.auto_submit']()}
-                </Label>
-                <p className="text-muted-foreground mt-0.5 text-xs">
-                  {m['admin.indexnow.auto_submit_help']()}
-                </p>
-              </div>
-              <Switch
-                id="indexnow-auto-submit"
-                checked={autoSubmit}
-                onCheckedChange={setAutoSubmit}
-              />
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            onClick={() => saveMutation.mutate()}
-            disabled={saving || !hasKey}
-            className="gap-2"
+        <CardContent>
+          <form
+            className="flex flex-col gap-4 sm:flex-row sm:items-end"
+            onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit();
+            }}
           >
-            <Save className="size-4" />
-            {saving ? m['admin.indexnow.saving']() : m['admin.indexnow.save']()}
+            <div className="flex-1">
+              <form.Field name="key">
+                {(field) => (
+                  <TextField
+                    field={field}
+                    label={m['admin.indexnow.key_label']()}
+                    placeholder="804998589fe84f6f800c71a2e1005e57"
+                    autoComplete="off"
+                  />
+                )}
+              </form.Field>
+            </div>
+            <form.Subscribe selector={(s) => s.isSubmitting}>
+              {(isSubmitting) => (
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || statusQuery.isPending}
+                >
+                  {isSubmitting && <Loader2 className="size-4 animate-spin" />}
+                  {m['admin.indexnow.save']()}
+                </Button>
+              )}
+            </form.Subscribe>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-3xl">
+        <CardHeader>
+          <CardTitle>{m['admin.indexnow.step_verify']()}</CardTitle>
+          <CardDescription>
+            {m['admin.indexnow.step_verify_desc']()}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {keyFileQuery.isError ? (
+            <p role="alert" className="text-destructive text-sm">
+              {keyFileQuery.error.message}
+            </p>
+          ) : statusQuery.isPending || keyFileQuery.isPending ? (
+            status && !status.key ? (
+              <p className="text-muted-foreground text-sm">
+                {m['admin.indexnow.no_key']()}
+              </p>
+            ) : (
+              <Loader2 className="text-muted-foreground size-4 animate-spin" />
+            )
+          ) : !keyFile || !status?.keyFileUrl ? (
+            <p className="text-muted-foreground text-sm">
+              {m['admin.indexnow.no_key']()}
+            </p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {keyFile.ok ? (
+                <CheckCircle2 className="size-4 text-green-600" />
+              ) : (
+                <XCircle className="text-destructive size-4" />
+              )}
+              <a
+                className="inline-flex items-center gap-1 font-mono break-all underline"
+                href={status.keyFileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {status.keyFileUrl}
+                <ExternalLink className="size-3" />
+              </a>
+              <span
+                className={keyFile.ok ? 'text-green-600' : 'text-destructive'}
+              >
+                {keyFile.ok
+                  ? m['admin.indexnow.key_file_ok']()
+                  : m['admin.indexnow.key_file_bad']({
+                      status: String(keyFile.status),
+                    })}
+              </span>
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => keyFileQuery.refetch()}
+            disabled={!status?.key || keyFileQuery.isFetching}
+          >
+            {keyFileQuery.isFetching && (
+              <Loader2 className="size-4 animate-spin" />
+            )}
+            {m['admin.indexnow.recheck']()}
           </Button>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="text-muted-foreground size-4" />
-            {m['admin.indexnow.verify_title']()}
-          </CardTitle>
+      <Card className="max-w-3xl">
+        <CardHeader>
+          <CardTitle>{m['admin.indexnow.step_submit']()}</CardTitle>
+          <CardDescription>
+            {m['admin.indexnow.step_submit_desc']()}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {settings?.keyLocation && (
-            <div className="bg-muted/30 flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center">
-              <code className="min-w-0 flex-1 truncate text-xs">
-                {settings.keyLocation}
-              </code>
-              <div className="flex shrink-0 gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => copyText(settings.keyLocation!)}
-                >
-                  <Copy data-icon="inline-start" />
-                  {m['admin.indexnow.copy']()}
-                </Button>
-                <a
-                  href={settings.keyLocation}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-8 items-center justify-center gap-1.5 rounded-md border px-3 text-sm font-medium"
-                >
-                  <ExternalLink className="size-3.5" />
-                  {m['admin.indexnow.open']()}
-                </a>
-              </div>
-            </div>
-          )}
-          <div className="flex flex-col gap-2 sm:flex-row">
+        <CardContent className="space-y-4">
+          <Button
+            onClick={() => submit.mutate('sitemap')}
+            disabled={!status?.key || submit.isPending}
+          >
+            {submit.isPending && <Loader2 className="size-4 animate-spin" />}
+            {m['admin.indexnow.submit_sitemap']()}
+          </Button>
+          <div className="space-y-2">
+            <Textarea
+              aria-label={m['admin.indexnow.urls_label']()}
+              rows={4}
+              value={urls}
+              onChange={(e) => setUrls(e.target.value)}
+              placeholder={m['admin.indexnow.urls_placeholder']()}
+            />
             <Button
-              type="button"
               variant="outline"
-              onClick={() => verifyMutation.mutate()}
-              disabled={!settings?.configured || verifyMutation.isPending}
-            >
-              <Check data-icon="inline-start" />
-              {verifyMutation.isPending
-                ? m['admin.indexnow.verifying']()
-                : m['admin.indexnow.verify']()}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => submitMutation.mutate()}
-              disabled={
-                !settings?.configured || !enabled || submitMutation.isPending
+              onClick={() =>
+                submit.mutate(
+                  urls
+                    .split(/\s+/)
+                    .map((u) => u.trim())
+                    .filter(Boolean)
+                )
               }
+              disabled={!status?.key || !urls.trim() || submit.isPending}
             >
-              <Send data-icon="inline-start" />
-              {submitMutation.isPending
-                ? m['admin.indexnow.submitting']()
-                : m['admin.indexnow.submit']()}
+              {m['admin.indexnow.submit_urls']()}
             </Button>
           </div>
-          {settings?.lastSubmittedAt && (
-            <p className="text-muted-foreground text-xs">
-              {m['admin.indexnow.last_submitted']({
-                count: settings.lastSubmittedCount,
-                time: new Date(settings.lastSubmittedAt).toLocaleString(),
-              })}
-            </p>
-          )}
-          {settings?.lastError && (
-            <div
-              role="alert"
-              className="border-destructive/20 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border px-3 py-2.5 text-sm"
-            >
-              <CircleAlert className="mt-0.5 size-4 shrink-0" />
-              <span>
-                {settings.lastError.includes('(429)')
-                  ? m['admin.indexnow.rate_limited']({
-                      time: settings.rateLimitedUntil
-                        ? new Date(settings.rateLimitedUntil).toLocaleString()
-                        : m['admin.indexnow.unknown_time'](),
-                    })
-                  : settings.lastError}
-              </span>
+          {result && (
+            <div className="bg-muted space-y-1 rounded-md p-3 text-sm">
+              <p className="font-medium">
+                {m['admin.indexnow.result_count']({ count: result.submitted })}
+              </p>
+              {result.results.flatMap((r, i) =>
+                r.attempts.map((a, j) => (
+                  <p
+                    key={`${i}-${j}`}
+                    className={
+                      a.status === 200 || a.status === 202
+                        ? 'text-green-600'
+                        : 'text-destructive'
+                    }
+                  >
+                    {a.endpoint} · HTTP {a.status || '—'} · {a.meaning} (
+                    {r.count})
+                  </p>
+                ))
+              )}
             </div>
           )}
         </CardContent>
@@ -307,5 +290,5 @@ function AdminIndexNowPage() {
 }
 
 export const Route = createFileRoute('/admin/indexnow')({
-  component: AdminIndexNowPage,
+  component: IndexNowPage,
 });

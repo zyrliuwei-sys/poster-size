@@ -1,23 +1,20 @@
-# IndexNow feature
+# IndexNow
 
-This feature adds an admin installer for Bing IndexNow. It uses the existing
-`config` table, so no schema migration is required.
+Installed from the supplied `indexnow-installer` bundle, replacing the previous
+admin page at `/admin/indexnow`. Administrators can save an editable key, verify
+its public `/{key}.txt` file, submit the sitemap, or submit specific URLs. Each
+batch displays the search engine's response, with fallback endpoints on transient
+errors. Failed batches are excluded from the successful submission count.
 
-## Copy to another ShipAny project
+The existing `config` table is used; no schema change is needed. New keys are
+stored under `indexnow_key` and encrypted when `CONFIG_ENCRYPTION_KEY` is set.
+The previous `indexnow_api_key` row remains readable. The previously published
+deployment key remains the default until an administrator saves another key.
+Key reads bypass the global config cache so verification uses the latest value.
 
-Copy these paths:
+Existing article notifications continue to honor `indexnow_enabled` and
+`indexnow_auto_submit`; failures never prevent an article from being saved.
 
-- `src/features/indexnow/`
-- `src/modules/indexnow/service.ts`
-- `src/routes/admin/indexnow.tsx`
-- `src/routes/api/admin/indexnow.ts`
-- `src/routes/{$key}[.]txt.ts`
-
-Then copy the `admin.nav.indexnow` and `admin.indexnow.*` messages from both
-locale files, add the `/admin/indexnow` item to `src/routes/admin/route.tsx`,
-and add the `notifyIndexNow` calls from `src/routes/api/admin/posts.ts` if the
-target project has the posts module.
-
-The page is available at `/admin/indexnow`. It generates or accepts an
-IndexNow key, serves the verification file at `/{key}.txt`, submits the
-current sitemap, and can notify IndexNow after article mutations.
+The browser reads public key/sitemap files through `apiGetText`. Sitemap indexes
+and language alternates are included. The server validates that submitted URLs
+belong to the configured public site and sends batches of up to 10,000 URLs.

@@ -1,23 +1,10 @@
-export type IndexNowSettings = {
-  configured: boolean;
-  apiKeyLocked: boolean;
-  enabled: boolean;
-  autoSubmit: boolean;
-  apiKeyMasked: string | null;
-  keyLocation: string | null;
-  lastSubmittedAt: string | null;
-  lastSubmittedCount: number;
-  lastError: string | null;
-  rateLimitedUntil: string | null;
-};
+export type IndexNowStatus = { key: string | null; keyFileUrl: string | null };
 
-export type IndexNowSubmission = {
+export type IndexNowSubmitResult = {
   submitted: number;
-  batches: number;
-  status: number;
-};
-
-export type IndexNowVerification = {
-  ok: boolean;
-  message: string;
+  results: {
+    ok: boolean;
+    count: number;
+    attempts: { endpoint: string; status: number; meaning: string }[];
+  }[];
 };
