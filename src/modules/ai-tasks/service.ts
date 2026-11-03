@@ -24,6 +24,7 @@ export async function createTask(params: {
   prompt: string;
   costCredits?: number;
   options?: any;
+  scene?: string;
 }): Promise<any> {
   const { userId, mediaType, provider, model, prompt, costCredits, options } =
     params;
@@ -39,6 +40,8 @@ export async function createTask(params: {
       prompt,
       status: AITaskStatus.PENDING,
       costCredits: costCredits || 0,
+      options: options ? JSON.stringify(options) : null,
+      scene: params.scene || '',
     };
 
     const [task] = await tx.insert(aiTask).values(taskData).returning();
@@ -91,6 +94,13 @@ export async function updateTask(params: {
 
   if (!task) throw new Error('Task not found');
 
+  // Refund before publishing failure. If restoration fails, a later poll can
+  // retry, and the client will not announce a refund that never happened.
+  if (status === AITaskStatus.FAILED && task.taskInfo) {
+    const info = JSON.parse(task.taskInfo as string);
+    if (info.creditId) await revoke(info.creditId);
+  }
+
   // Update task
   const updateData: any = { status };
   if (taskResult) {
@@ -98,18 +108,6 @@ export async function updateTask(params: {
   }
 
   await db().update(aiTask).set(updateData).where(eq(aiTask.id, taskId));
-
-  // Revoke credits on failure
-  if (status === AITaskStatus.FAILED && task.taskInfo) {
-    try {
-      const info = JSON.parse(task.taskInfo as string);
-      if (info.creditId) {
-        await revoke(info.creditId);
-      }
-    } catch {
-      // Ignore parse errors
-    }
-  }
 }
 
 /**

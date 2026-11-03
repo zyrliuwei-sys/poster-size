@@ -1,0 +1,563 @@
+@layer components {
+  .ps-ai-hero {
+    width: min(100%, var(--ps-content-width));
+    margin: 0 auto;
+    padding: 3.5rem var(--ps-page-gutter) 4.5rem;
+    scroll-margin-top: 70px;
+  }
+
+  .ps-ai-intro {
+    margin-bottom: 2.3rem;
+  }
+  .ps-ai-intro .ps-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+  }
+  .ps-ai-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ps-accent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--ps-accent) 12%, transparent);
+  }
+  .ps-ai-intro h1 {
+    margin: 0;
+    font-size: clamp(2.3rem, 5.4vw, 4.25rem);
+    line-height: 1.08;
+    font-weight: 600;
+    letter-spacing: -0.055em;
+    text-wrap: balance;
+  }
+  .ps-ai-intro > p:last-child {
+    max-width: 640px;
+    margin: 1.1rem 0 0;
+    color: var(--ps-ink-soft);
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+  .ps-ai-workspace {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    border: 1px solid color-mix(in oklab, var(--ps-rule) 35%, transparent);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 35px color-mix(in oklab, var(--ps-stage) 5%, transparent);
+  }
+  .ps-ai-controls {
+    min-width: 0;
+    padding: 1.7rem 1.8rem;
+    background: color-mix(in oklab, var(--ps-paper) 65%, var(--ps-poster-sand));
+  }
+  .ps-ai-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .ps-ai-panel-heading svg {
+    color: var(--ps-accent);
+  }
+  .ps-ai-prompt-field {
+    position: relative;
+  }
+  .ps-ai-prompt-field textarea {
+    display: block;
+    width: 100%;
+    min-height: 146px;
+    padding: 1rem 1rem 1.7rem;
+    resize: vertical;
+    border: 1px solid color-mix(in oklab, var(--ps-rule) 28%, transparent);
+    border-radius: 5px;
+    outline: none;
+    background: var(--ps-paper);
+    color: var(--ps-ink);
+    font: inherit;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    transition: border-color 160ms;
+  }
+  .ps-ai-prompt-field textarea::placeholder {
+    color: var(--ps-ink-soft);
+    opacity: 0.8;
+  }
+  .ps-ai-prompt-field textarea:focus {
+    border-color: var(--ps-accent);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--ps-accent) 12%, transparent);
+  }
+  .ps-ai-character-count {
+    position: absolute;
+    right: 0.7rem;
+    bottom: 0.5rem;
+    color: var(--ps-ink-soft);
+    font-size: 0.61rem;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  .ps-ai-examples {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0.85rem 0 1.65rem;
+  }
+  .ps-ai-examples > span {
+    margin-right: 0.1rem;
+    color: var(--ps-ink-soft);
+    font-size: 0.66rem;
+  }
+  .ps-ai-examples button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    min-height: 30px;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid color-mix(in oklab, var(--ps-rule) 18%, transparent);
+    border-radius: 3px;
+    font-size: 0.64rem;
+    cursor: pointer;
+  }
+  .ps-ai-examples button:hover {
+    border-color: var(--ps-accent);
+    color: var(--ps-accent);
+  }
+  .ps-ai-styles {
+    min-width: 0;
+    margin: 0 0 1.4rem;
+    padding: 0;
+    border: 0;
+  }
+  .ps-ai-styles legend,
+  .ps-ai-select-row label > span {
+    display: block;
+    margin-bottom: 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .ps-ai-styles > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .ps-ai-styles button {
+    display: inline-flex;
+    min-height: 33px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid color-mix(in oklab, var(--ps-rule) 24%, transparent);
+    border-radius: 3px;
+    background: transparent;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition:
+      background 160ms,
+      color 160ms;
+  }
+  .ps-ai-styles button:hover {
+    background: var(--ps-paper-soft);
+  }
+  .ps-ai-styles button.is-active {
+    background: var(--ps-ink);
+    color: var(--ps-paper);
+    border-color: var(--ps-ink);
+  }
+  .ps-ai-select-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9rem;
+  }
+  .ps-ai-select-row label {
+    min-width: 0;
+  }
+  .ps-ai-select-row select {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.55rem 1.4rem 0.55rem 0.65rem;
+    border: 1px solid color-mix(in oklab, var(--ps-rule) 28%, transparent);
+    border-radius: 4px;
+    background: var(--ps-paper);
+    color: var(--ps-ink);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  .ps-ai-submit-area {
+    margin-top: 1.6rem;
+  }
+  .ps-ai-generate {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    border: 0;
+    border-radius: 4px;
+    background: var(--ps-accent);
+    color: #fff;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background 160ms,
+      transform 160ms;
+  }
+  .ps-ai-generate > svg:last-child {
+    margin-left: auto;
+  }
+  .ps-ai-generate > svg:first-child {
+    margin-right: auto;
+  }
+  .ps-ai-generate > svg {
+    flex-shrink: 0;
+  }
+  .ps-ai-generate {
+    padding: 0.8rem 1rem;
+  }
+  .ps-ai-generate:hover {
+    background: color-mix(in oklab, var(--ps-accent) 88%, var(--ps-stage));
+    transform: translateY(-1px);
+  }
+  .ps-ai-generate:disabled {
+    cursor: default;
+    opacity: 0.55;
+    transform: none;
+  }
+  .ps-ai-controls button:disabled,
+  .ps-ai-controls select:disabled,
+  .ps-ai-controls textarea:disabled {
+    cursor: default;
+  }
+  .ps-ai-credit-note {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-top: 0.65rem;
+    color: var(--ps-ink-soft);
+    font-size: 0.65rem;
+  }
+  .ps-ai-error {
+    margin: 0.7rem 0 0;
+    color: var(--ps-accent);
+    font-size: 0.74rem;
+    line-height: 1.6;
+  }
+  .ps-ai-error a,
+  .ps-ai-error button {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .ps-ai-preview-panel {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    border-left: 1px solid color-mix(in oklab, var(--ps-rule) 25%, transparent);
+    background: var(--ps-paper-soft);
+  }
+  .ps-ai-preview-heading,
+  .ps-ai-preview-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 51px;
+    padding: 0.85rem 1.3rem;
+    color: var(--ps-ink-soft);
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+  }
+  .ps-ai-preview-heading {
+    border-bottom: 1px solid
+      color-mix(in oklab, var(--ps-rule) 14%, transparent);
+  }
+  .ps-ai-preview-heading > span:first-child {
+    color: var(--ps-ink);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .ps-ai-preview-status {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .ps-ai-preview-status::before {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--ps-accent);
+    content: '';
+  }
+  .ps-ai-preview-stage {
+    position: relative;
+    display: flex;
+    min-height: 390px;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 1.7rem;
+    background-image: radial-gradient(
+      color-mix(in oklab, var(--ps-rule) 16%, transparent) 0.7px,
+      transparent 0.7px
+    );
+    background-size: 15px 15px;
+  }
+  .ps-ai-sample {
+    position: relative;
+    display: flex;
+    width: min(255px, 83%);
+    aspect-ratio: 2 / 3;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: 1.2rem;
+    transform: rotate(-4deg);
+    background: #ef623d;
+    color: #24231e;
+    box-shadow:
+      7px 10px 0 color-mix(in oklab, var(--ps-stage) 12%, transparent),
+      0 15px 30px #24180d20;
+  }
+  .ps-ai-sample-top,
+  .ps-ai-sample-bottom {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    font-size: 0.42rem;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+  }
+  .ps-ai-sample-top > span:last-child {
+    text-align: right;
+  }
+  .ps-ai-sample-art {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .ps-ai-sample-art i {
+    position: absolute;
+    top: 13%;
+    right: -21%;
+    width: 85%;
+    aspect-ratio: 1;
+    border: 23px solid #f1c743;
+    border-radius: 50%;
+    transform: rotate(-30deg);
+  }
+  .ps-ai-sample-art i:nth-child(2) {
+    top: 24%;
+    right: -18%;
+    border-color: #293e85;
+  }
+  .ps-ai-sample-art i:nth-child(3) {
+    top: 35%;
+    right: -15%;
+    border-color: #eee8d3;
+  }
+  .ps-ai-sample-type {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+    padding-top: 7rem;
+  }
+  .ps-ai-sample-type > span {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.4rem;
+    letter-spacing: 0.04em;
+  }
+  .ps-ai-sample-type strong {
+    display: block;
+    font-family: 'IBM Plex Sans Variable', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 0.83;
+    letter-spacing: -0.075em;
+    white-space: pre-line;
+  }
+  .ps-ai-sample-bottom {
+    align-items: end;
+    margin-top: 1rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid currentColor;
+    font-size: 0.38rem;
+  }
+  .ps-ai-sample-bottom > span:last-child {
+    font-size: 1.5rem;
+    line-height: 0.8;
+  }
+  .ps-ai-sample-1 {
+    background: #e6ddbf;
+    color: #214735;
+    transform: rotate(3deg);
+  }
+  .ps-ai-sample-1 .ps-ai-sample-art i {
+    border-color: #c7743a;
+  }
+  .ps-ai-sample-1 .ps-ai-sample-art i:nth-child(2) {
+    border-color: #214735;
+  }
+  .ps-ai-sample-1 .ps-ai-sample-art i:nth-child(3) {
+    border-color: #b8c6a0;
+  }
+  .ps-ai-sample-2 {
+    background: #d2deed;
+    color: #243850;
+    transform: rotate(-2deg);
+  }
+  .ps-ai-sample-2 .ps-ai-sample-art i {
+    border-radius: 0;
+    border-color: #e7593d;
+  }
+  .ps-ai-sample-2 .ps-ai-sample-art i:nth-child(2) {
+    border-radius: 0;
+    border-color: #f4ebd9;
+  }
+  .ps-ai-sample-2 .ps-ai-sample-art i:nth-child(3) {
+    border-radius: 0;
+    border-color: #4566a4;
+  }
+  .ps-ai-result {
+    display: block;
+    max-width: 100%;
+    max-height: 450px;
+    object-fit: contain;
+    box-shadow: 0 8px 25px #0002;
+  }
+  .ps-ai-preview-footer {
+    min-height: 50px;
+    border-top: 1px solid color-mix(in oklab, var(--ps-rule) 14%, transparent);
+    letter-spacing: 0;
+  }
+  .ps-ai-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--ps-ink);
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .ps-ai-download:hover {
+    color: var(--ps-accent);
+  }
+  .ps-ai-preview-note {
+    margin: 0;
+    padding: 0 1.3rem 1rem;
+    color: var(--ps-ink-soft);
+    font-size: 0.68rem;
+    line-height: 1.6;
+  }
+  .ps-ai-preview-note.ps-ai-error {
+    color: var(--ps-accent);
+  }
+  .ps-ai-preview-note button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .ps-ai-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem;
+    background: color-mix(in oklab, var(--ps-paper-soft) 92%, transparent);
+    backdrop-filter: blur(8px);
+    text-align: center;
+  }
+  .ps-ai-loading > svg {
+    color: var(--ps-accent);
+  }
+  .ps-ai-loading strong {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+  .ps-ai-loading p {
+    max-width: 270px;
+    margin: 0;
+    color: var(--ps-ink-soft);
+    font-size: 0.8rem;
+    line-height: 1.7;
+  }
+  .ps-ai-loading progress {
+    width: min(210px, 100%);
+    height: 4px;
+    accent-color: var(--ps-accent);
+  }
+  .ps-ai-spin {
+    animation: ps-ai-rotate 1.4s linear infinite;
+  }
+  .ps-ai-hero :is(button, a, select, textarea):focus-visible {
+    outline: 2px solid var(--ps-accent);
+    outline-offset: 3px;
+  }
+  @keyframes ps-ai-rotate {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (max-width: 800px) {
+    .ps-ai-hero {
+      padding-top: 2.5rem;
+    }
+    .ps-ai-workspace {
+      grid-template-columns: 1fr;
+    }
+    .ps-ai-preview-panel {
+      border-top: 1px solid color-mix(in oklab, var(--ps-rule) 25%, transparent);
+      border-left: 0;
+    }
+    .ps-ai-preview-stage {
+      min-height: 420px;
+    }
+    .ps-ai-sample {
+      max-width: 230px;
+    }
+  }
+  @media (max-width: 480px) {
+    .ps-ai-intro h1 {
+      font-size: 2.55rem;
+    }
+    .ps-ai-controls {
+      padding: 1.25rem 1rem;
+    }
+    .ps-ai-examples {
+      gap: 0.35rem;
+    }
+    .ps-ai-select-row {
+      gap: 0.65rem;
+    }
+    .ps-ai-select-row select {
+      font-size: 0.7rem;
+      padding-left: 0.45rem;
+    }
+    .ps-ai-preview-stage {
+      min-height: 390px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ps-ai-spin {
+      animation: none;
+    }
+    .ps-ai-generate {
+      transition: none;
+    }
+  }
+}

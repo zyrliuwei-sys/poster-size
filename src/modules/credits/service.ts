@@ -219,23 +219,37 @@ export async function consume(params: {
 // --- Revoke (restore credits from a consumed record) ---
 
 export async function revoke(consumeCreditId: string) {
-  const [consumeRecord] = await db()
-    .select()
-    .from(credit)
-    .where(
-      and(
-        eq(credit.id, consumeCreditId),
-        eq(credit.transactionType, CreditTransactionType.CONSUME),
-        eq(credit.status, CreditStatus.ACTIVE)
-      )
-    )
-    .limit(1);
-
-  if (!consumeRecord || !consumeRecord.consumedDetail) return;
-
-  const items = JSON.parse(consumeRecord.consumedDetail);
-
   await db().transaction(async (tx: any) => {
+    // Lock the consumption so concurrent task polls cannot refund twice.
+    const [consumeRecord] = await tx
+      .select()
+      .from(credit)
+      .where(
+        and(
+          eq(credit.id, consumeCreditId),
+          eq(credit.transactionType, CreditTransactionType.CONSUME),
+          eq(credit.status, CreditStatus.ACTIVE)
+        )
+      )
+      .limit(1)
+      .for('update');
+    if (!consumeRecord?.consumedDetail) return;
+    const items = JSON.parse(consumeRecord.consumedDetail);
+
+    const claimed = await tx
+      .update(credit)
+      .set({ status: CreditStatus.DELETED })
+      .where(
+        and(
+          eq(credit.id, consumeCreditId),
+          eq(credit.status, CreditStatus.ACTIVE)
+        )
+      )
+      .returning();
+    // D1 has no row locks: the conditional update arbitrates its concurrent
+    // polls. MySQL uses the row lock above and the returning compatibility shim.
+    if (!claimed.length) return;
+
     // Atomic increment per source grant — no read-modify-write race.
     for (const item of items) {
       await tx
@@ -245,12 +259,6 @@ export async function revoke(consumeCreditId: string) {
         })
         .where(eq(credit.id, item.creditId));
     }
-
-    // Mark consumption record as deleted
-    await tx
-      .update(credit)
-      .set({ status: CreditStatus.DELETED })
-      .where(eq(credit.id, consumeCreditId));
   });
 }
 

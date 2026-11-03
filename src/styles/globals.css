@@ -1,6 +1,7 @@
 /* Poster Size / Soft Brutalist print studio */
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import './ai-poster.css';
 
 @custom-variant dark (&:is(.dark *));
 

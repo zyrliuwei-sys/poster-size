@@ -45,7 +45,7 @@ export function PosterHeader() {
               {m['poster.nav.sign_in']()}
             </Link>
           )}
-          <Link href="/poster-generator" className="ps-nav-cta">
+          <Link href="/#poster-generator" className="ps-nav-cta">
             {m['poster.nav.generator']()}
             <ArrowUpRight size={15} aria-hidden="true" />
           </Link>
@@ -75,7 +75,7 @@ export function PosterHeader() {
 
       {mobileOpen && (
         <div className="ps-mobile-panel">
-          <Link href="/poster-generator" onClick={() => setMobileOpen(false)}>
+          <Link href="/#poster-generator" onClick={() => setMobileOpen(false)}>
             {m['poster.nav.generator']()}
           </Link>
           <Link href="/size-guide" onClick={() => setMobileOpen(false)}>

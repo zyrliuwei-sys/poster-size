@@ -2,6 +2,7 @@ import type { PosterSizeItem } from '@/types/poster-size';
 
 import { Link } from '@/core/i18n/navigation';
 import { m } from '@/paraglide/messages.js';
+import { AIPosterGeneratorBlock } from '@/blocks/ai-poster-generator';
 import { PosterFooter } from '@/components/poster-footer';
 import { PosterHeader } from '@/components/poster-header';
 import { PosterSizeFinder } from '@/components/poster-size-finder';
@@ -69,60 +70,7 @@ export function PosterHome({
     <div className="ps-page">
       <PosterHeader />
       <main>
-        <section className="ps-hero">
-          <div className="ps-hero-copy">
-            <p className="ps-eyebrow">{m['poster.hero.kicker']()}</p>
-            <h1>{m['poster.hero.title']()}</h1>
-            <p className="ps-hero-description">
-              {m['poster.hero.description']()}
-            </p>
-            <div className="ps-hero-actions">
-              <Link href="/poster-generator" className="ps-primary-button">
-                {m['poster.hero.browse']()}
-                <span aria-hidden="true">↗</span>
-              </Link>
-              <Link href="/settings/favorites" className="ps-text-link">
-                {m['poster.hero.saved']()}
-              </Link>
-            </div>
-            <div
-              className="ps-hero-proof"
-              aria-label={m['poster.hero.formats_label']()}
-            >
-              <span>{m['poster.hero.print']()}</span>
-              <span>{m['poster.hero.social']()}</span>
-              <span>{m['poster.hero.slides']()}</span>
-              <span>{m['poster.hero.ratios']()}</span>
-            </div>
-          </div>
-          <div
-            className="ps-specimen-wall ps-hero-stage"
-            aria-label={m['poster.hero.specimen_alt']()}
-          >
-            <div className="ps-stage-label">
-              {m['poster.hero.format_library']()}
-            </div>
-            <div className="ps-specimen ps-specimen-a4">
-              <span>01</span>
-              <strong>A4</strong>
-              <small>{m['poster.specimen.a4_unit']()}</small>
-            </div>
-            <div className="ps-specimen ps-specimen-poster">
-              <span>02</span>
-              <strong>18 × 24</strong>
-              <small>{m['poster.specimen.poster_unit']()}</small>
-            </div>
-            <div className="ps-specimen ps-specimen-wide">
-              <span>03</span>
-              <strong>16:9</strong>
-              <small>{m['poster.specimen.presentation_unit']()}</small>
-            </div>
-            <div className="ps-stage-footer">
-              <span>{m['poster.hero.stage_footer']()}</span>
-              <span aria-hidden="true">↘</span>
-            </div>
-          </div>
-        </section>
+        <AIPosterGeneratorBlock />
 
         <PosterSizeFinder compact initialItems={initialItems} />
 
