@@ -75,9 +75,9 @@ export function PosterHome({
     <div className="ps-page">
       <PosterHeader />
       <main>
-        <PosterCreditPricingBlock />
-
         <AIPosterGeneratorBlock preset={example} />
+
+        <PosterCreditPricingBlock />
 
         <PosterShowcaseBlock onUseExample={setExample} />
 
