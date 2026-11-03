@@ -2,6 +2,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import './ai-poster.css';
+@import './poster-showcase.css';
 
 @custom-variant dark (&:is(.dark *));
 

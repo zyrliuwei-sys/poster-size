@@ -22,6 +22,7 @@ import {
 } from '@/modules/ai-tasks/service';
 import { getAllConfigs } from '@/modules/config/service';
 import { getBalance } from '@/modules/credits/service';
+import { getGuestIdentity } from '@/modules/guest/service';
 import {
   findPosterTask,
   posterTaskView,
@@ -31,6 +32,23 @@ import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
 
 const PRIVATE_HEADERS = { 'Cache-Control': 'private, no-store' };
+
+type PosterIdentity = { id: string; email: string; guest: boolean };
+
+async function getPosterIdentity(
+  request: Request
+): Promise<PosterIdentity | undefined> {
+  const session = await getAuth().api.getSession({ headers: request.headers });
+  if (session?.user) {
+    return {
+      id: session.user.id,
+      email: session.user.email,
+      guest: false,
+    };
+  }
+  const guest = await getGuestIdentity(request);
+  return guest ? { id: guest.id, email: guest.email, guest: true } : undefined;
+}
 
 async function applyProviderStatus(id: string, remote: EvoLinkImageTask) {
   if (['failed', 'cancelled', 'canceled'].includes(remote.status)) {
@@ -57,9 +75,7 @@ async function applyProviderStatus(id: string, remote: EvoLinkImageTask) {
 
 async function GET({ request }: { request: Request }) {
   try {
-    const session = await getAuth().api.getSession({
-      headers: request.headers,
-    });
+    const identity = await getPosterIdentity(request);
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
     if (!id) {
@@ -68,13 +84,14 @@ async function GET({ request }: { request: Request }) {
         {
           configured: Boolean(config),
           costs: POSTER_CREDITS,
-          balance: session?.user ? await getBalance(session.user.id) : null,
+          balance: identity ? await getBalance(identity.id) : null,
+          guest: identity?.guest ?? false,
         },
         { headers: PRIVATE_HEADERS }
       );
     }
-    if (!session?.user) return respErr('POSTER_AUTH_REQUIRED', { status: 401 });
-    const task = await findPosterTask(id, session.user.id);
+    if (!identity) return respErr('POSTER_PAYMENT_REQUIRED', { status: 402 });
+    const task = await findPosterTask(id, identity.id);
     if (!task) return respErr('POSTER_NOT_FOUND', { status: 404 });
 
     if (url.searchParams.get('download') === '1') {
@@ -122,7 +139,7 @@ async function GET({ request }: { request: Request }) {
         await queryEvoLinkImage(config, task.taskId)
       );
     }
-    const current = await findPosterTask(id, session.user.id);
+    const current = await findPosterTask(id, identity.id);
     return respData(posterTaskView(current || task), {
       headers: PRIVATE_HEADERS,
     });
@@ -145,12 +162,12 @@ async function POST({ request }: { request: Request }) {
   ]);
   if (origin && !allowedOrigins.has(origin))
     return respErr('POSTER_INVALID_ORIGIN', { status: 403 });
-  const session = await getAuth().api.getSession({ headers: request.headers });
-  if (!session?.user) return respErr('POSTER_AUTH_REQUIRED', { status: 401 });
+  const identity = await getPosterIdentity(request);
+  if (!identity) return respErr('POSTER_PAYMENT_REQUIRED', { status: 402 });
   const limited = enforceMinIntervalRateLimit(request, {
     intervalMs: 8000,
     keyPrefix: 'poster-generation',
-    extraKey: session.user.id,
+    extraKey: identity.id,
   });
   if (limited) return respErr('POSTER_RATE_LIMITED', { status: 429 });
 
@@ -170,7 +187,8 @@ async function POST({ request }: { request: Request }) {
 
     const input = parsed.data;
     const task = await createTask({
-      userId: session.user.id,
+      userId: identity.id,
+      userEmail: identity.email,
       mediaType: 'image',
       provider: 'evolink',
       model: POSTER_MODEL,
@@ -187,14 +205,14 @@ async function POST({ request }: { request: Request }) {
     });
     remoteAccepted = true;
     await applyProviderStatus(task.id, remote);
-    const saved = await findPosterTask(task.id, session.user.id);
+    const saved = await findPosterTask(task.id, identity.id);
     return respData(posterTaskView(saved || task), {
       headers: PRIVATE_HEADERS,
     });
   } catch (error) {
     // Once a provider task is saved, a later status error must not lose it.
     if (taskId && remoteAccepted) {
-      const task = await findPosterTask(taskId, session.user.id);
+      const task = await findPosterTask(taskId, identity.id);
       if (task)
         return respData(posterTaskView(task), { headers: PRIVATE_HEADERS });
     }
@@ -202,7 +220,7 @@ async function POST({ request }: { request: Request }) {
       try {
         await updateTask({ taskId, status: AITaskStatus.FAILED });
       } catch {
-        const task = await findPosterTask(taskId, session.user.id);
+        const task = await findPosterTask(taskId, identity.id);
         if (task)
           return respData(posterTaskView(task), { headers: PRIVATE_HEADERS });
         return respErr('POSTER_REFUND_PENDING', { status: 503 });

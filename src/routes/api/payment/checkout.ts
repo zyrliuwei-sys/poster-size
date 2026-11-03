@@ -3,6 +3,11 @@ import { createFileRoute } from '@tanstack/react-router';
 import { getAuth } from '@/core/auth';
 import { getPricingProduct } from '@/config/pricing';
 import { getAllConfigs } from '@/modules/config/service';
+import {
+  createGuestIdentity,
+  getGuestIdentity,
+  guestCookieHeader,
+} from '@/modules/guest/service';
 import { createCheckout } from '@/modules/payment/service';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
@@ -34,10 +39,6 @@ async function POST({ request }: { request: Request }) {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: request.headers });
 
-    if (!session?.user) {
-      return respErr('Unauthorized');
-    }
-
     const body = await request.json().catch(() => ({}));
     const { product_id, payment_provider, redirect } = body;
 
@@ -51,6 +52,13 @@ async function POST({ request }: { request: Request }) {
     if (!product) {
       return respErr('Unknown product');
     }
+
+    const guest = session?.user
+      ? undefined
+      : ((await getGuestIdentity(request)) ?? (await createGuestIdentity()));
+    const userId = session?.user?.id || guest?.id;
+    const userEmail = session?.user?.email || guest?.email || '';
+    if (!userId) return respErr('Unable to create checkout identity');
 
     // Optional per-provider "test amount" override (admin-configured).
     // Only the charged amount is overridden — credits granted and order
@@ -67,7 +75,7 @@ async function POST({ request }: { request: Request }) {
     const baseUrl = configs.app_url || 'http://localhost:3000';
     const safeRedirectPath = safeSameOriginPath(
       redirect,
-      '/settings/billing',
+      session?.user ? '/settings/billing' : '/',
       baseUrl
     );
     // Straight to the destination: safeSameOriginPath has already reduced it
@@ -79,8 +87,8 @@ async function POST({ request }: { request: Request }) {
     const cancelUrl = `${baseUrl}/pricing`;
 
     const checkout = await createCheckout({
-      userId: session.user.id,
-      userEmail: session.user.email,
+      userId,
+      userEmail,
       productName: product.productName,
       planName: product.planName,
       credits: product.credits,
@@ -92,10 +100,14 @@ async function POST({ request }: { request: Request }) {
         description: product.description,
         successUrl,
         cancelUrl,
-        customer: {
-          email: session.user.email,
-          name: session.user.name,
-        },
+        // Let the provider collect a real receipt email for guest buyers. The
+        // internal guest email is deliberately never sent to the provider.
+        customer: session?.user
+          ? {
+              email: session.user.email,
+              name: session.user.name,
+            }
+          : undefined,
         plan: product.plan
           ? {
               name: product.plan.name,
@@ -107,7 +119,16 @@ async function POST({ request }: { request: Request }) {
       provider: payment_provider,
     });
 
-    return respData({ checkout_url: checkout.checkoutInfo.checkoutUrl });
+    return respData(
+      { checkout_url: checkout.checkoutInfo.checkoutUrl },
+      guest
+        ? {
+            headers: {
+              'Set-Cookie': guestCookieHeader(guest.cookieValue, request),
+            },
+          }
+        : undefined
+    );
   } catch (error: any) {
     console.error('checkout error:', error);
     return respErr(error.message || 'Checkout failed');

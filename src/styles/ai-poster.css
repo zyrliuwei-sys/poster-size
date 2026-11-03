@@ -561,3 +561,314 @@
     }
   }
 }
+
+@layer components {
+  .ps-credit-pricing {
+    width: min(100%, var(--ps-content-width));
+    margin: 0 auto;
+    border-bottom: 1px solid
+      color-mix(in oklab, var(--ps-rule) 25%, transparent);
+    padding: clamp(1.75rem, 4vw, 3rem) var(--ps-page-gutter);
+    background: var(--ps-paper-soft);
+    scroll-margin-top: 48px;
+  }
+
+  .ps-credit-pricing-inline {
+    width: auto;
+    margin-top: 1.25rem;
+    padding: 1.25rem 0 0;
+    border-top: 1px solid color-mix(in oklab, var(--ps-rule) 30%, transparent);
+    border-bottom: 0;
+    background: transparent;
+  }
+
+  .ps-credit-pricing-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 1.8rem;
+  }
+
+  .ps-credit-pricing-head > div {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1.1fr 1fr;
+    column-gap: 2.5rem;
+    align-items: end;
+  }
+
+  .ps-credit-pricing-head .ps-eyebrow {
+    grid-column: 1 / -1;
+  }
+
+  .ps-credit-pricing-head h2 {
+    max-width: 22ch;
+    margin: 0.75rem 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3.5vw, 2.8rem);
+    font-weight: 700;
+    letter-spacing: -0.055em;
+    line-height: 1.15;
+  }
+
+  .ps-credit-pricing-head p:not(.ps-eyebrow) {
+    max-width: 37rem;
+    margin: 0.75rem 0 0;
+    color: var(--ps-ink-soft);
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  .ps-credit-pricing-inline .ps-credit-pricing-head {
+    margin-bottom: 1rem;
+  }
+
+  .ps-credit-pricing-inline .ps-credit-pricing-head > div {
+    display: block;
+  }
+
+  .ps-credit-pricing-inline .ps-credit-pricing-head h2 {
+    max-width: none;
+    margin-top: 0;
+    font-size: clamp(1.35rem, 3vw, 1.9rem);
+    letter-spacing: -0.05em;
+    line-height: 1;
+  }
+
+  .ps-credit-pricing-inline .ps-credit-pricing-head p:not(.ps-eyebrow) {
+    margin-top: 0.55rem;
+    font-size: 0.76rem;
+  }
+
+  .ps-credit-pricing-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    border: 1px solid color-mix(in oklab, var(--ps-rule) 28%, transparent);
+    background: transparent;
+    color: var(--ps-ink);
+    cursor: pointer;
+  }
+
+  .ps-credit-pricing-close:hover {
+    border-color: var(--ps-ink);
+    background: var(--ps-paper);
+  }
+
+  .ps-credit-pack-grid {
+    display: grid;
+    grid-template-columns: 0.92fr 1.08fr 0.92fr;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .ps-credit-pack {
+    --ps-pack-ink: var(--ps-ink);
+    --ps-pack-muted: var(--ps-ink-soft);
+    --ps-pack-paper: var(--ps-paper);
+    position: relative;
+    display: flex;
+    min-height: 285px;
+    flex-direction: column;
+    border: 2px solid var(--ps-ink);
+    padding: 1.35rem;
+    background: var(--ps-paper);
+    color: var(--ps-pack-ink);
+    box-shadow: 4px 4px 0 color-mix(in oklab, var(--ps-ink) 20%, transparent);
+  }
+
+  .ps-credit-pack-featured {
+    --ps-pack-ink: oklch(0.24 0.035 42);
+    --ps-pack-muted: oklch(0.38 0.035 42);
+    --ps-pack-paper: var(--ps-poster-yellow);
+    background: var(--ps-poster-yellow);
+    box-shadow: 6px 6px 0 var(--ps-ink);
+    transform: translateY(-0.5rem);
+  }
+
+  .ps-credit-pack-badge {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    border-left: 2px solid var(--ps-ink);
+    border-bottom: 2px solid var(--ps-ink);
+    padding: 0.45rem 0.65rem;
+    background: var(--ps-accent);
+    color: var(--ps-pack-ink);
+    font-family: var(--font-display);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .ps-credit-pack-topline {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--ps-pack-muted);
+    font-family: var(--font-display);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .ps-credit-pack-topline svg {
+    color: var(--ps-pack-ink);
+  }
+
+  .ps-credit-pack-price {
+    margin-top: 2rem;
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 5vw, 5rem);
+    font-weight: 700;
+    letter-spacing: -0.1em;
+    line-height: 0.85;
+  }
+
+  .ps-credit-pack > strong {
+    display: block;
+    margin-top: 1.15rem;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    letter-spacing: -0.03em;
+  }
+
+  .ps-credit-pack > p {
+    margin: 0.45rem 0 1.5rem;
+    color: var(--ps-pack-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .ps-credit-pack-button {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: auto;
+    border: 2px solid var(--ps-pack-ink);
+    padding: 0.65rem 0.8rem;
+    background: var(--ps-pack-ink);
+    color: var(--ps-pack-paper);
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      transform 160ms,
+      background 160ms,
+      color 160ms;
+  }
+
+  .ps-credit-pack-button svg:last-child {
+    margin-left: auto;
+  }
+
+  .ps-credit-pack-button:hover {
+    background: var(--ps-accent);
+    color: var(--ps-pack-ink);
+    transform: translate(-1px, -1px);
+  }
+
+  .ps-credit-pack-button:disabled {
+    cursor: default;
+    opacity: 0.58;
+    transform: none;
+  }
+
+  .ps-credit-pricing-note,
+  .ps-credit-pricing-after {
+    margin: 1.4rem 0 0;
+    color: var(--ps-ink-soft);
+    font-size: 0.7rem;
+    line-height: 1.6;
+  }
+
+  .ps-credit-usage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    margin-top: 1.6rem;
+    border-top: 1px solid color-mix(in oklab, var(--ps-rule) 25%, transparent);
+    padding-top: 1rem;
+    color: var(--ps-ink-soft);
+    font-size: 0.75rem;
+    line-height: 1.6;
+  }
+
+  .ps-credit-usage > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .ps-credit-usage strong {
+    color: var(--ps-ink);
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+
+  .ps-credit-usage + .ps-credit-pricing-note {
+    margin-top: 0.65rem;
+  }
+
+  .ps-credit-pricing-after {
+    color: var(--ps-ink);
+    font-weight: 600;
+  }
+
+  .ps-credit-pricing :is(button):focus-visible {
+    outline: 2px solid var(--ps-accent);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 760px) {
+    .ps-credit-pricing-head {
+      display: block;
+    }
+
+    .ps-credit-pricing-head > div {
+      display: block;
+    }
+
+    .ps-credit-pricing-head h2 {
+      max-width: none;
+    }
+
+    .ps-credit-pricing-close {
+      position: absolute;
+      top: 1rem;
+      right: 0;
+    }
+
+    .ps-credit-pricing-inline .ps-credit-pricing-head {
+      position: relative;
+      padding-right: 2.5rem;
+    }
+
+    .ps-credit-pack-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ps-credit-pack-featured {
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ps-credit-pack-button {
+      transition: none;
+    }
+  }
+}

@@ -1,9 +1,16 @@
+import type { PosterExamplePreset } from '@/config/poster-examples';
 import { m } from '@/paraglide/messages.js';
+import { getPosterCreditPricingCopy } from '@/blocks/poster-credit-pricing';
 import { AIPosterGenerator } from '@/components/ai-poster-generator';
 
-export function AIPosterGeneratorBlock() {
+export function AIPosterGeneratorBlock({
+  preset,
+}: {
+  preset?: PosterExamplePreset | null;
+}) {
   return (
     <AIPosterGenerator
+      preset={preset}
       copy={{
         kicker: m['poster.ai.kicker'](),
         title: m['poster.ai.title'](),
@@ -39,8 +46,11 @@ export function AIPosterGeneratorBlock() {
         sampleSubtitle: m['poster.ai.sample_subtitle'](),
         sampleFooter: m['poster.ai.sample_footer'](),
         resultAlt: m['poster.ai.result_alt'](),
+        creditPricing: getPosterCreditPricingCopy(),
+        presetApplied: m['poster.showcase.applied'](),
         errors: {
           POSTER_AUTH_REQUIRED: m['poster.ai.auth_error'](),
+          POSTER_PAYMENT_REQUIRED: m['poster.ai.payment_required'](),
           POSTER_INVALID_INPUT: m['poster.ai.prompt_error'](),
           POSTER_NOT_CONFIGURED: m['poster.ai.not_configured'](),
           POSTER_INSUFFICIENT_CREDITS: m['poster.ai.insufficient'](),

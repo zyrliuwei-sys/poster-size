@@ -1,0 +1,264 @@
+@layer components {
+  .ps-showcase {
+    width: min(100%, var(--ps-content-width));
+    margin: 0 auto;
+    padding: 1rem var(--ps-page-gutter) 5rem;
+    scroll-margin-top: 75px;
+  }
+  .ps-showcase-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid color-mix(in oklab, var(--ps-rule) 28%, transparent);
+  }
+  .ps-showcase-heading .ps-eyebrow {
+    margin-bottom: 0.9rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+  .ps-showcase-heading h2 {
+    max-width: 620px;
+    margin: 0;
+    font-size: clamp(2rem, 3.8vw, 3.1rem);
+    font-weight: 550;
+    line-height: 1.08;
+    letter-spacing: -0.055em;
+    text-wrap: balance;
+  }
+  .ps-showcase-description {
+    max-width: 315px;
+    margin: 0 0 0.1rem;
+    color: var(--ps-ink-soft);
+    font-size: 0.85rem;
+    line-height: 1.75;
+  }
+  .ps-showcase-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin: 2.3rem 0 1.6rem;
+    border-bottom: 1px solid
+      color-mix(in oklab, var(--ps-rule) 25%, transparent);
+  }
+  .ps-showcase-filters {
+    display: flex;
+    align-items: stretch;
+    gap: 1.55rem;
+    min-width: 0;
+    overflow-x: auto;
+  }
+  .ps-showcase-filters button {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 0;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--ps-ink-soft);
+    font: inherit;
+    font-size: 0.76rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color 160ms,
+      border-color 160ms;
+  }
+  .ps-showcase-filters button > span {
+    align-self: center;
+    font-size: 0.56rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.7;
+    transform: translateY(-3px);
+  }
+  .ps-showcase-filters button[aria-pressed='true'] {
+    border-bottom-color: var(--ps-ink);
+    color: var(--ps-ink);
+    font-weight: 600;
+  }
+  .ps-showcase-filters button:hover {
+    color: var(--ps-accent);
+  }
+  .ps-showcase-count {
+    flex-shrink: 0;
+    color: var(--ps-ink-soft);
+    font-size: 0.65rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .ps-showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: 1.3rem;
+    row-gap: 2.15rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ps-showcase-card {
+    min-width: 0;
+  }
+  .ps-showcase-art {
+    position: relative;
+    display: block;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border: 1px solid color-mix(in oklab, var(--ps-rule) 12%, transparent);
+    border-radius: 3px;
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--ps-stage) 6%, transparent);
+  }
+  .ps-showcase-art img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 450ms var(--ps-ease-out);
+  }
+  .ps-showcase-art:hover img {
+    transform: scale(1.035);
+  }
+  .ps-showcase-zoom {
+    position: absolute;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid #ffffff70;
+    border-radius: 50%;
+    background: #f7f2e8ef;
+    color: #2c211c;
+    opacity: 0;
+    transform: translateY(5px);
+    transition:
+      opacity 160ms,
+      transform 160ms;
+  }
+  .ps-showcase-art:hover .ps-showcase-zoom,
+  .ps-showcase-art:focus-visible .ps-showcase-zoom {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .ps-showcase-caption {
+    padding-top: 0.85rem;
+  }
+  .ps-showcase-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: var(--ps-ink-soft);
+    font-size: 0.58rem;
+    letter-spacing: 0.02em;
+  }
+  .ps-showcase-caption h3 {
+    margin: 0.45rem 0 0.2rem;
+    font-size: 0.91rem;
+    font-weight: 550;
+    line-height: 1.5;
+    letter-spacing: -0.025em;
+  }
+  .ps-showcase-card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+  }
+  .ps-showcase-card-foot > span {
+    color: var(--ps-ink-soft);
+    font-size: 0.65rem;
+  }
+  .ps-showcase-card-foot button {
+    display: inline-flex;
+    min-height: 36px;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0;
+    border: 0;
+    color: var(--ps-accent);
+    font: inherit;
+    font-size: 0.65rem;
+    font-weight: 550;
+    cursor: pointer;
+  }
+  .ps-showcase-card-foot button:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .ps-showcase-note {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 2.25rem 0 0;
+    padding-top: 1.2rem;
+    border-top: 1px solid color-mix(in oklab, var(--ps-rule) 20%, transparent);
+    color: var(--ps-ink-soft);
+    font-size: 0.7rem;
+    line-height: 1.6;
+  }
+  .ps-showcase-note > span {
+    color: var(--ps-accent);
+    font-size: 1rem;
+  }
+  .ps-showcase :is(a, button):focus-visible {
+    outline: 2px solid var(--ps-accent);
+    outline-offset: 4px;
+  }
+  @media (max-width: 1000px) {
+    .ps-showcase-heading {
+      gap: 1.5rem;
+    }
+    .ps-showcase-description {
+      max-width: 260px;
+    }
+    .ps-showcase-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 720px) {
+    .ps-showcase-heading {
+      flex-direction: column;
+      align-items: start;
+      gap: 1.1rem;
+    }
+    .ps-showcase-description {
+      max-width: 440px;
+    }
+    .ps-showcase-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 0.9rem;
+      row-gap: 1.5rem;
+    }
+    .ps-showcase-count {
+      display: none;
+    }
+    .ps-showcase-filters {
+      width: 100%;
+      gap: 1.15rem;
+    }
+    .ps-showcase-toolbar {
+      margin-top: 1.5rem;
+    }
+    .ps-showcase-caption h3 {
+      font-size: 0.83rem;
+    }
+    .ps-showcase-card-foot {
+      align-items: start;
+      flex-direction: column;
+      gap: 0;
+    }
+    .ps-showcase-card-foot button {
+      min-height: 40px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ps-showcase-art img,
+    .ps-showcase-zoom {
+      transition: none;
+    }
+  }
+}

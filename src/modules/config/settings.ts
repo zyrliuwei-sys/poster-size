@@ -484,7 +484,7 @@ export function getSettings(): Setting[] {
       name: 'creem_product_ids_mapping',
       title: 'Product IDs Mapping',
       type: 'textarea',
-      placeholder: '{"starter_monthly": "prod_xxx"}',
+      placeholder: '{"hobby_one_time": "prod_xxx"}',
       tip: 'Map the product_id in pricing catalog to the product ID created in Creem. Must be a valid JSON object.',
       group: 'creem',
       tab: 'payment',

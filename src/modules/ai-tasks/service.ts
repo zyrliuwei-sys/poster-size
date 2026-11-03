@@ -18,6 +18,7 @@ export enum AITaskStatus {
  */
 export async function createTask(params: {
   userId: string;
+  userEmail?: string;
   mediaType: string;
   provider: string;
   model: string;
@@ -26,8 +27,16 @@ export async function createTask(params: {
   options?: any;
   scene?: string;
 }): Promise<any> {
-  const { userId, mediaType, provider, model, prompt, costCredits, options } =
-    params;
+  const {
+    userId,
+    userEmail,
+    mediaType,
+    provider,
+    model,
+    prompt,
+    costCredits,
+    options,
+  } = params;
 
   return db().transaction(async (tx: any) => {
     // 1. Insert task
@@ -50,6 +59,7 @@ export async function createTask(params: {
     if (costCredits && costCredits > 0) {
       const result = await consume({
         userId,
+        userEmail,
         credits: costCredits,
         scene: 'ai_task',
         description: `AI ${mediaType} generation`,

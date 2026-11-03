@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import type { PosterSizeItem } from '@/types/poster-size';
 
 import { Link } from '@/core/i18n/navigation';
+import type { PosterExamplePreset } from '@/config/poster-examples';
 import { m } from '@/paraglide/messages.js';
 import { AIPosterGeneratorBlock } from '@/blocks/ai-poster-generator';
+import { PosterCreditPricingBlock } from '@/blocks/poster-credit-pricing';
+import { PosterShowcaseBlock } from '@/blocks/poster-showcase';
 import { PosterFooter } from '@/components/poster-footer';
 import { PosterHeader } from '@/components/poster-header';
 import { PosterSizeFinder } from '@/components/poster-size-finder';
@@ -66,11 +70,16 @@ export function PosterHome({
 }: {
   initialItems?: PosterSizeItem[];
 }) {
+  const [example, setExample] = useState<PosterExamplePreset | null>(null);
   return (
     <div className="ps-page">
       <PosterHeader />
       <main>
-        <AIPosterGeneratorBlock />
+        <PosterCreditPricingBlock />
+
+        <AIPosterGeneratorBlock preset={example} />
+
+        <PosterShowcaseBlock onUseExample={setExample} />
 
         <PosterSizeFinder compact initialItems={initialItems} />
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -9,19 +9,25 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { useSession } from '@/core/auth/client';
-import { Link } from '@/core/i18n/navigation';
+import type { PosterExamplePreset } from '@/config/poster-examples';
 import {
   POSTER_CREDITS,
   POSTER_QUALITIES,
   POSTER_SIZES,
+  posterInputSchema,
   type PosterGenerationConfig,
   type PosterInput,
   type PosterTaskView,
 } from '@/config/poster-generation';
 import { apiGet, apiPost } from '@/lib/api-client';
+import {
+  PosterCreditPricing,
+  type PosterCreditPricingCopy,
+} from '@/components/poster-credit-pricing';
 
 export interface AIPosterCopy {
   kicker: string;
@@ -58,20 +64,25 @@ export interface AIPosterCopy {
   sampleSubtitle: string;
   sampleFooter: string;
   resultAlt: string;
+  creditPricing: PosterCreditPricingCopy;
+  presetApplied: string;
   errors: Record<string, string>;
   qualities: Record<PosterInput['quality'], string>;
   sizes: Record<PosterInput['size'], string>;
 }
 
 interface Props {
+  preset?: PosterExamplePreset | null;
   copy: AIPosterCopy;
   styles: { id: PosterInput['style']; label: string }[];
   examples: { label: string; prompt: string; style: PosterInput['style'] }[];
 }
 
 const DRAFT_KEY = 'ps-poster-draft-v1';
+const PENDING_POSTER_KEY = 'ps-pending-poster-v1';
+const GUEST_TASK_KEY = 'ps-poster-task:guest';
 
-export function AIPosterGenerator({ copy, styles, examples }: Props) {
+export function AIPosterGenerator({ copy, styles, examples, preset }: Props) {
   const { data: session, isPending: sessionPending } = useSession();
   const userId = session?.user.id;
   const queryClient = useQueryClient();
@@ -81,9 +92,12 @@ export function AIPosterGenerator({ copy, styles, examples }: Props) {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [sampleIndex, setSampleIndex] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
+  const [resumeInput, setResumeInput] = useState<PosterInput | null>(null);
+  const appliedPreset = useRef<PosterExamplePreset | null>(null);
 
   const config = useQuery({
-    queryKey: ['poster-generation-config', userId],
+    queryKey: ['poster-generation-config', userId || 'anonymous'],
     queryFn: () => apiGet<PosterGenerationConfig>('/api/poster-generation'),
     staleTime: 30_000,
   });
@@ -91,24 +105,29 @@ export function AIPosterGenerator({ copy, styles, examples }: Props) {
     mutationFn: (input: PosterInput) =>
       apiPost<PosterTaskView>('/api/poster-generation', input),
     onSuccess: (task) => {
-      queryClient.setQueryData(['poster-task', userId, task.id], task);
+      const taskIdentity = userId || 'guest';
+      queryClient.setQueryData(['poster-task', taskIdentity, task.id], task);
       setTaskId(task.id);
       setImageFailed(false);
       try {
-        localStorage.setItem(`ps-poster-task:${userId}`, task.id);
+        localStorage.setItem(
+          userId ? `ps-poster-task:${userId}` : GUEST_TASK_KEY,
+          task.id
+        );
       } catch {
         /* Storage is optional. */
       }
       queryClient.invalidateQueries({ queryKey: ['poster-generation-config'] });
     },
   });
+  const identityKey = userId || (config.data?.guest ? 'guest' : null);
   const taskQuery = useQuery({
-    queryKey: ['poster-task', userId, taskId],
+    queryKey: ['poster-task', identityKey, taskId],
     queryFn: () =>
       apiGet<PosterTaskView>(
         `/api/poster-generation?id=${encodeURIComponent(taskId!)}`
       ),
-    enabled: Boolean(userId && taskId),
+    enabled: Boolean(identityKey && taskId),
     refetchInterval: (query) =>
       ['success', 'failed', 'canceled'].includes(query.state.data?.status || '')
         ? false
@@ -138,8 +157,19 @@ export function AIPosterGenerator({ copy, styles, examples }: Props) {
       }),
     },
     onSubmit: ({ value }) => {
-      if (!busy)
-        mutation.mutate({ prompt: value.prompt.trim(), style, size, quality });
+      if (busy) return;
+      const input = { prompt: value.prompt.trim(), style, size, quality };
+      if (!userId && !config.data?.guest) {
+        savePendingPoster(input);
+        setPurchaseOpen(true);
+        return;
+      }
+      if (insufficient) {
+        savePendingPoster(input);
+        setPurchaseOpen(true);
+        return;
+      }
+      mutation.mutate(input);
     },
   });
 
@@ -152,15 +182,41 @@ export function AIPosterGenerator({ copy, styles, examples }: Props) {
     }
   }, [form]);
   useEffect(() => {
+    if (!preset || busy || appliedPreset.current === preset) return;
+    appliedPreset.current = preset;
+    form.setFieldValue('prompt', preset.prompt);
+    setStyle(preset.style);
+    setSize(preset.size);
+    mutation.reset();
+    try {
+      localStorage.setItem(DRAFT_KEY, preset.prompt);
+    } catch {
+      /* Storage is optional. */
+    }
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    document.getElementById('poster-generator')?.scrollIntoView({
+      behavior: reducedMotion ? 'instant' : 'smooth',
+      block: 'start',
+    });
+    document.getElementById('ai-poster-prompt')?.focus({ preventScroll: true });
+    toast.success(copy.presetApplied);
+  }, [preset, busy, form, copy.presetApplied]);
+  useEffect(() => {
     setTaskId(null);
-    if (userId) {
+    if (identityKey) {
       try {
-        setTaskId(localStorage.getItem(`ps-poster-task:${userId}`));
+        setTaskId(
+          localStorage.getItem(
+            userId ? `ps-poster-task:${userId}` : GUEST_TASK_KEY
+          )
+        );
       } catch {
         /* Storage is optional. */
       }
     }
-  }, [userId]);
+  }, [identityKey, userId]);
   useEffect(() => {
     if (task && ['success', 'failed', 'canceled'].includes(task.status))
       queryClient.invalidateQueries({ queryKey: ['poster-generation-config'] });
@@ -170,6 +226,59 @@ export function AIPosterGenerator({ copy, styles, examples }: Props) {
     ? copy.errors[mutation.error.message] ||
       copy.errors.POSTER_GENERATION_FAILED
     : null;
+
+  function savePendingPoster(input: PosterInput) {
+    try {
+      localStorage.setItem(PENDING_POSTER_KEY, JSON.stringify(input));
+    } catch {
+      /* Storage is optional. */
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('poster_paid') !== '1') return;
+
+    try {
+      const raw = localStorage.getItem(PENDING_POSTER_KEY);
+      const parsed = raw ? posterInputSchema.safeParse(JSON.parse(raw)) : null;
+      if (parsed?.success) {
+        setStyle(parsed.data.style);
+        setSize(parsed.data.size);
+        setQuality(parsed.data.quality);
+        form.setFieldValue('prompt', parsed.data.prompt);
+        setResumeInput(parsed.data);
+      }
+      url.searchParams.delete('poster_paid');
+      window.history.replaceState(
+        {},
+        '',
+        `${url.pathname}${url.search}${url.hash}`
+      );
+    } catch {
+      /* Storage is optional. */
+    }
+  }, [form]);
+
+  useEffect(() => {
+    if (
+      !resumeInput ||
+      busy ||
+      !config.data?.configured ||
+      config.data.balance == null ||
+      config.data.balance < costs[resumeInput.quality]
+    )
+      return;
+
+    setResumeInput(null);
+    try {
+      localStorage.removeItem(PENDING_POSTER_KEY);
+    } catch {
+      /* Storage is optional. */
+    }
+    mutation.mutate(resumeInput);
+  }, [busy, config.data, costs, mutation, resumeInput]);
 
   return (
     <section
@@ -314,39 +423,23 @@ export function AIPosterGenerator({ copy, styles, examples }: Props) {
             </label>
           </div>
           <div className="ps-ai-submit-area">
-            {!sessionPending && !userId ? (
-              <Link
-                href="/sign-in?callbackUrl=%2F%23poster-generator"
-                className="ps-ai-generate"
-              >
-                <Sparkles size={17} aria-hidden="true" />
-                {copy.signIn}
-                <ArrowUpRight size={17} aria-hidden="true" />
-              </Link>
-            ) : (
-              <button
-                className="ps-ai-generate"
-                type="submit"
-                disabled={
-                  sessionPending ||
-                  busy ||
-                  !config.data?.configured ||
-                  insufficient
-                }
-              >
-                {busy ? (
-                  <LoaderCircle
-                    className="ps-ai-spin"
-                    size={18}
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <Sparkles size={18} aria-hidden="true" />
-                )}
-                <span>{busy ? copy.generating : copy.generate}</span>
-                <ArrowUpRight size={17} aria-hidden="true" />
-              </button>
-            )}
+            <button
+              className="ps-ai-generate"
+              type="submit"
+              disabled={sessionPending || busy || !config.data?.configured}
+            >
+              {busy ? (
+                <LoaderCircle
+                  className="ps-ai-spin"
+                  size={18}
+                  aria-hidden="true"
+                />
+              ) : (
+                <Sparkles size={18} aria-hidden="true" />
+              )}
+              <span>{busy ? copy.generating : copy.generate}</span>
+              <ArrowUpRight size={17} aria-hidden="true" />
+            </button>
             <div className="ps-ai-credit-note">
               <span>{copy.creditCost(costs[quality])}</span>
               {config.data?.balance != null && (
@@ -368,14 +461,29 @@ export function AIPosterGenerator({ copy, styles, examples }: Props) {
             )}
             {insufficient && (
               <p className="ps-ai-error">
-                {copy.insufficient}{' '}
-                <Link href="/pricing">{copy.pricing} ↗</Link>
+                {copy.insufficient} {copy.pricing}
               </p>
             )}
             {errorMessage && (
               <p className="ps-ai-error" role="alert">
                 {errorMessage}
               </p>
+            )}
+            {purchaseOpen && (
+              <PosterCreditPricing
+                copy={copy.creditPricing}
+                mode="inline"
+                onClose={() => setPurchaseOpen(false)}
+                redirect="/?poster_paid=1#poster-generator"
+                onBeforeCheckout={() =>
+                  savePendingPoster({
+                    prompt: form.state.values.prompt.trim(),
+                    style,
+                    size,
+                    quality,
+                  })
+                }
+              />
             )}
           </div>
         </form>

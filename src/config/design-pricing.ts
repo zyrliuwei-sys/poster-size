@@ -1,11 +1,12 @@
 /**
- * Credits used by the room-design product.
+ * Shared credit conversion and generation markup.
  *
  * EvoLink's current top-up tiers show 65 API credits per dollar at $10 and
- * 68 API credits per dollar from $50 upward. We use those same units and add
- * the requested 7x customer-credit multiplier.
+ * 68 API credits per dollar from $50 upward. Top-ups keep those units;
+ * the 8x markup applies only to generation charges. Multiplying both top-ups
+ * and charges would cancel the requested markup.
  */
-export const USER_CREDIT_MULTIPLIER = 7;
+export const USER_CREDIT_MULTIPLIER = 8;
 export const EVOLINK_STARTER_CREDITS_PER_DOLLAR = 65;
 export const EVOLINK_STANDARD_CREDITS_PER_DOLLAR = 68;
 
@@ -18,7 +19,7 @@ export function creditsForPriceInCents(priceInCents: number): number {
     dollars <= 10
       ? EVOLINK_STARTER_CREDITS_PER_DOLLAR
       : EVOLINK_STANDARD_CREDITS_PER_DOLLAR;
-  return Math.round(dollars * apiCreditsPerDollar * USER_CREDIT_MULTIPLIER);
+  return Math.round(dollars * apiCreditsPerDollar);
 }
 
 export function creditsForUpstreamUsage(upstreamCredits?: number): number {
