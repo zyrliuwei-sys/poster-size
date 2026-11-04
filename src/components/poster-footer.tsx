@@ -1,6 +1,7 @@
 import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { m } from '@/paraglide/messages.js';
+import { FooterBadgeList } from '@/components/footer-badge-list';
 
 export function PosterFooter() {
   const year = new Date().getFullYear();
@@ -29,6 +30,7 @@ export function PosterFooter() {
           <Link href="/terms-of-service">{m['poster.footer.terms']()}</Link>
         </nav>
       </div>
+      <FooterBadgeList className="mt-6" />
       <span className="sr-only">{envConfigs.app_name}</span>
     </footer>
   );
