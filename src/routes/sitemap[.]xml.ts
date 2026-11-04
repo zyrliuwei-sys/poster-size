@@ -15,6 +15,7 @@ export const STATIC_PATHS = [
   '/poster-sizes/18x24',
   '/poster-sizes/24x36',
   '/poster-generator',
+  '/printable-2027-calendar',
   '/pricing',
   '/blog',
   '/privacy-policy',

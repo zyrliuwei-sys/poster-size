@@ -3,6 +3,7 @@
 @import 'tw-animate-css';
 @import './ai-poster.css';
 @import './poster-showcase.css';
+@import './calendar-2027.css';
 
 @custom-variant dark (&:is(.dark *));
 

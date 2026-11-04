@@ -18,6 +18,9 @@ export function PosterFooter() {
           className="ps-footer-links"
         >
           <Link href="/size-guide">{m['poster.footer.browse']()}</Link>
+          <Link href="/printable-2027-calendar">
+            {m['calendar2027.footer_link']()}
+          </Link>
           <Link href="/settings/favorites">
             {m['poster.footer.favorites']()}
           </Link>
