@@ -30,6 +30,9 @@ export function PosterHeader() {
         <nav className="ps-nav-links" aria-label={m['poster.nav.primary']()}>
           <Link href="/#pricing">{m['poster.nav.pricing']()}</Link>
           <Link href="/#poster-examples">{m['poster.showcase.nav']()}</Link>
+          <Link href="/printable-2027-calendar">
+            {m['poster.nav.calendar']()}
+          </Link>
           <Link href="/size-guide">{m['poster.nav.browse']()}</Link>
           <Link href="/settings/favorites">{m['poster.nav.favorites']()}</Link>
         </nav>
@@ -82,6 +85,12 @@ export function PosterHeader() {
           </Link>
           <Link href="/#poster-examples" onClick={() => setMobileOpen(false)}>
             {m['poster.showcase.nav']()}
+          </Link>
+          <Link
+            href="/printable-2027-calendar"
+            onClick={() => setMobileOpen(false)}
+          >
+            {m['poster.nav.calendar']()}
           </Link>
           <Link href="/#poster-generator" onClick={() => setMobileOpen(false)}>
             {m['poster.nav.generator']()}

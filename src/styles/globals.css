@@ -1740,7 +1740,7 @@ body {
   .ps-nav-links {
     display: flex;
     justify-content: center;
-    gap: 1.7rem;
+    gap: clamp(0.75rem, 1.7vw, 1.7rem);
     margin: 0 auto;
     font-size: 0.78rem;
   }
@@ -1749,6 +1749,7 @@ body {
     display: inline-flex;
     min-height: 40px;
     align-items: center;
+    white-space: nowrap;
   }
 
   .ps-nav-links a:hover,

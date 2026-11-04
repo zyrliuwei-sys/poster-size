@@ -77,9 +77,9 @@ export function PosterHome({
       <main>
         <AIPosterGeneratorBlock preset={example} />
 
-        <PosterCreditPricingBlock />
-
         <PosterShowcaseBlock onUseExample={setExample} />
+
+        <PosterCreditPricingBlock />
 
         <PosterSizeFinder compact initialItems={initialItems} />
 

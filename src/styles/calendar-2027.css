@@ -1,13 +1,15 @@
 @layer components {
   .cal-page {
-    --cal-bg: oklch(0.976 0.006 260);
-    --cal-surface: oklch(1 0 0);
-    --cal-ink: oklch(0.28 0.026 260);
-    --cal-muted: oklch(0.51 0.026 260);
-    --cal-line: oklch(0.88 0.016 260);
-    --cal-accent: oklch(0.48 0.17 268);
-    --ps-paper: var(--cal-bg);
-    --ps-paper-soft: var(--cal-surface);
+    --cal-bg: var(--ps-paper);
+    --cal-surface: color-mix(
+      in oklab,
+      var(--ps-paper) 65%,
+      var(--ps-poster-sand)
+    );
+    --cal-ink: oklch(0.24 0.035 42);
+    --cal-muted: oklch(0.48 0.035 42);
+    --cal-line: color-mix(in oklab, var(--cal-ink) 20%, var(--cal-bg));
+    --cal-accent: oklch(0.62 0.17 35);
     --ps-ink: var(--cal-ink);
     --ps-ink-soft: var(--cal-muted);
     --ps-rule: var(--cal-ink);
@@ -22,12 +24,9 @@
   }
 
   .dark .cal-page {
-    --cal-bg: oklch(0.19 0.018 260);
-    --cal-surface: oklch(0.23 0.02 260);
-    --cal-ink: oklch(0.95 0.006 260);
-    --cal-muted: oklch(0.74 0.018 260);
-    --cal-line: oklch(0.36 0.025 260);
-    --cal-accent: oklch(0.75 0.12 268);
+    --cal-ink: oklch(0.95 0.028 92);
+    --cal-muted: oklch(0.73 0.03 92);
+    --cal-accent: oklch(0.72 0.16 35);
   }
 
   .dark .cal-page .ps-wordmark-logo {
@@ -199,7 +198,7 @@
   .cal-segmented button[aria-pressed='true'] {
     background: var(--cal-surface);
     color: var(--cal-accent);
-    box-shadow: 0 1px 3px oklch(0.2 0.02 260 / 0.12);
+    box-shadow: 0 1px 3px oklch(0.2 0.02 42 / 0.12);
   }
   .cal-palettes {
     display: flex;
@@ -292,7 +291,7 @@
     cursor: pointer;
   }
   .dark .cal-download {
-    color: oklch(0.19 0.018 260);
+    color: oklch(0.23 0.025 42);
   }
   .cal-download > span {
     margin-left: auto;
@@ -386,8 +385,8 @@
     max-height: 590px;
     background: white;
     box-shadow:
-      0 2px 4px oklch(0.2 0.02 260 / 0.08),
-      0 12px 30px oklch(0.2 0.02 260 / 0.08);
+      0 2px 4px oklch(0.2 0.02 42 / 0.08),
+      0 12px 30px oklch(0.2 0.02 42 / 0.08);
   }
   .cal-preview-bottom {
     display: flex;
@@ -457,6 +456,106 @@
   .cal-month-index button span {
     color: var(--cal-muted);
   }
+  .cal-design-showcase {
+    padding-block: 3.25rem;
+    border-bottom: 1px solid var(--cal-line);
+    scroll-margin-top: 70px;
+  }
+
+  .cal-design-heading h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.65rem, 3vw, 2.25rem);
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  .cal-design-heading > p {
+    max-width: 46rem;
+    margin: 0.8rem 0 0;
+    color: var(--cal-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .cal-design-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 1.75rem 2rem;
+    align-items: center;
+    margin-top: 1.75rem;
+  }
+
+  .cal-design-example {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 1.25rem;
+    align-items: center;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .cal-design-example:first-child {
+    display: block;
+    grid-row: span 2;
+    align-self: start;
+  }
+
+  .cal-design-example > a {
+    display: block;
+    overflow: hidden;
+    border-radius: 4px;
+    background: var(--cal-surface);
+    cursor: zoom-in;
+  }
+
+  .cal-design-example img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    transition: transform 180ms ease;
+  }
+
+  .cal-design-example > a:hover img {
+    transform: scale(1.025);
+  }
+
+  .cal-design-example:first-child figcaption {
+    padding-top: 1.15rem;
+  }
+
+  .cal-design-example h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+
+  .cal-design-example:first-child h3 {
+    font-size: 1.4rem;
+  }
+
+  .cal-design-example figcaption p {
+    margin: 0.55rem 0 0;
+    color: var(--cal-muted);
+    font-size: 0.82rem;
+    line-height: 1.75;
+  }
+
+  .cal-design-note {
+    margin: 1.5rem 0 0;
+    color: var(--cal-muted);
+    font-size: 0.7rem;
+    line-height: 1.6;
+  }
+
   .cal-guide-layout {
     display: grid;
     grid-template-columns: 260px minmax(0, 1fr);
@@ -625,6 +724,34 @@
   }
 
   @media (max-width: 680px) {
+    .cal-design-showcase {
+      padding-block: 2rem;
+    }
+
+    .cal-design-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.75rem;
+    }
+
+    .cal-design-example,
+    .cal-design-example:first-child {
+      display: block;
+      grid-row: auto;
+    }
+
+    .cal-design-example img {
+      aspect-ratio: 3 / 2;
+    }
+
+    .cal-design-example figcaption {
+      padding-top: 1rem;
+    }
+
+    .cal-design-example h3,
+    .cal-design-example:first-child h3 {
+      font-size: 1.25rem;
+    }
+
     .cal-hero {
       padding-block: 1.5rem;
     }

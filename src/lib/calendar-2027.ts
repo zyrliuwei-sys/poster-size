@@ -34,7 +34,7 @@ export const DEFAULT_CALENDAR_SETTINGS: CalendarSettings = {
 };
 
 export const CALENDAR_PALETTES = {
-  blue: '#304cc0',
+  blue: 'oklch(0.62 0.17 35)',
   ink: '#262d35',
   forest: '#25604d',
 } as const;
@@ -90,9 +90,9 @@ export function createCalendarSvg(
   const h = paper.height * 4;
   const margin = 48;
   const accent = CALENDAR_PALETTES[settings.palette];
-  const ink = '#262d35';
-  const muted = '#657080';
-  const rule = '#dbe0e7';
+  const ink = 'oklch(0.24 0.035 42)';
+  const muted = 'oklch(0.48 0.035 42)';
+  const rule = 'oklch(0.24 0.035 42 / 0.22)';
   const order = Array.from(
     { length: 7 },
     (_, i) => (i + (settings.weekStart === 'monday' ? 1 : 0)) % 7
@@ -197,7 +197,7 @@ export function createCalendarSvg(
       );
       if (settings.weekends && weekend)
         parts.push(
-          `<rect x="${x + col * cw}" y="${top}" width="${cw}" height="${rh * 6}" fill="#f4f6fa"/>`
+          `<rect x="${x + col * cw}" y="${top}" width="${cw}" height="${rh * 6}" fill="oklch(0.97 0.02 92)"/>`
         );
     });
     for (let col = 0; col <= 7; col++)

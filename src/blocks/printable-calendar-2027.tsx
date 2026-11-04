@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { Link } from '@/core/i18n/navigation';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
+import { CalendarDesignShowcaseBlock } from '@/blocks/calendar-design-showcase';
 import { CalendarGenerator } from '@/components/calendar-generator';
 import { PosterFooter } from '@/components/poster-footer';
 import { PosterHeader } from '@/components/poster-header';
@@ -157,10 +158,15 @@ export function PrintableCalendar2027Block() {
           }}
         />
 
+        <CalendarDesignShowcaseBlock />
+
         <div className="cal-guide-layout">
           <aside className="cal-contents">
             <h2>{m['calendar2027.contents']()}</h2>
             <nav aria-label={m['calendar2027.contents']()}>
+              <a href="#desk-calendar-designs">
+                {m['calendar2027.designs.nav']()}
+              </a>
               {articles.map((article) => (
                 <a key={article.id} href={`#${article.id}`}>
                   {article.title}
