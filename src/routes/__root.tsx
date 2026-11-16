@@ -69,8 +69,23 @@ export const Route = createRootRoute({
         { name: 'description', content: envConfigs.app_description },
       ],
       links: [
-        { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
-        { rel: 'apple-touch-icon', href: '/favicon.svg' },
+        {
+          rel: 'icon',
+          href: '/favicon.ico',
+          type: 'image/x-icon',
+          sizes: '48x48',
+        },
+        {
+          rel: 'icon',
+          href: '/favicon-192.png',
+          type: 'image/png',
+          sizes: '192x192',
+        },
+        {
+          rel: 'apple-touch-icon',
+          href: '/apple-touch-icon.png',
+          sizes: '180x180',
+        },
         // hreflang/canonical live on each page's own head() — a layout-level
         // set would claim every page's English version is the homepage.
       ],
