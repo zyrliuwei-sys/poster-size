@@ -20,15 +20,43 @@ export function FooterBadgeList({ className }: { className?: string }) {
   if (badges.length === 0) return null;
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-4', className)}>
-      {badges.map((badge) => (
-        <FooterBadgeLink
-          key={`${badge.href}:${badge.src}`}
-          badge={badge}
-          className="inline-flex max-w-full transition-opacity hover:opacity-80"
-          imageClassName="h-auto max-w-full"
-        />
-      ))}
+    <div
+      className={cn(
+        'footer-badge-marquee',
+        badges.length > 1 && 'footer-badge-marquee-animated',
+        className
+      )}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          event.currentTarget.scrollLeft = 0;
+        }
+      }}
+    >
+      <div
+        className="footer-badge-track"
+        style={{ animationDuration: `${Math.max(24, badges.length * 4)}s` }}
+      >
+        {Array.from({ length: badges.length > 1 ? 2 : 1 }, (_, copy) => (
+          <div
+            key={copy}
+            className={cn(
+              'footer-badge-group',
+              copy === 1 && 'footer-badge-group-copy'
+            )}
+            aria-hidden={copy === 1 || undefined}
+          >
+            {badges.map((badge, index) => (
+              <FooterBadgeLink
+                key={`${badge.href}:${badge.src}:${index}`}
+                badge={badge}
+                hidden={copy === 1}
+                className="footer-badge-link"
+                imageClassName="footer-badge-image"
+              />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

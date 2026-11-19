@@ -4,6 +4,7 @@
 @import './ai-poster.css';
 @import './poster-showcase.css';
 @import './calendar-2027.css';
+@import './footer-badges.css';
 
 @custom-variant dark (&:is(.dark *));
 
